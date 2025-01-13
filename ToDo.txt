@@ -1,0 +1,8 @@
+make inventory system 
+	make items snap to the inventory grid when not being dragged
+	make that items cannot overlap with each other
+add a collection to where they will be put later (maybe use a grid layout inside of a scroll view and make their objects tell position for their local position????)
+
+!add on join synchronization!
+
+!add flair / juice to the moving of the objects.!
