@@ -7,16 +7,16 @@ public class MouseBehaviour : NetworkBehaviour
 
     public static ulong PlayerID;
     public static Canvas canvas;
+    public static Transform hand;
 
     private void Start()
     {
-        if(IsServer)
+        canvas = FindFirstObjectByType<Canvas>();
+        if (IsServer)
         {
-            Canvas can = FindFirstObjectByType<Canvas>();
-            if (can != null)
+            if (canvas != null)
             {
-                NetworkObject.TrySetParent(can.transform, true);
-                canvas = can;
+                NetworkObject.TrySetParent(canvas.transform, true);
             }
             else
             {
@@ -27,22 +27,39 @@ public class MouseBehaviour : NetworkBehaviour
         {
             PlayerID = NetworkObject.OwnerClientId;
             GetComponent<Image>().enabled = false;
+            hand = canvas.transform.Find("Hand");
+            RequestInventoryServerRPC(NetworkObject.OwnerClientId);
         }
+        
     }
 
-    private Vector2 previousPosition;
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestInventoryServerRPC(ulong uID)
+    {
+        RequestInventoryClientRPC(uID);
+    }
+    [ClientRpc(RequireOwnership = false)]
+    public void RequestInventoryClientRPC(ulong uID)
+    {
+        if (!IsServer) return;
+
+        CreateInventory(uID);
+    }
+
+    public void CreateInventory(ulong uID)
+    {
+        var g = Instantiate(Resources.Load<GameObject>("Inventory"));
+        var net = g.GetComponent<NetworkObject>();
+        net.Spawn();
+        net.TrySetParent(canvas.transform.Find("Inventories"));
+        net.ChangeOwnership(uID);
+    }
 
     void Update()
     {
-
-        //Perform visuals
-
-
-        previousPosition = transform.position;
         if (!IsOwner) return;
 
         if(Application.isFocused)
             transform.position = Input.mousePosition;
-
     }
 }

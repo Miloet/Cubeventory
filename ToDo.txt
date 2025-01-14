@@ -1,8 +1,20 @@
-make inventory system 
-	make items snap to the inventory grid when not being dragged
-	make that items cannot overlap with each other
-add a collection to where they will be put later (maybe use a grid layout inside of a scroll view and make their objects tell position for their local position????)
-
 !add on join synchronization!
 
 !add flair / juice to the moving of the objects.!
+
+
+when giving an item to a client and it becomes obscured it will cause a desync for some reason? (might be fixed but give it a look anyhow)
+
+joining server with a code
+
+more clearly show ownership of item with some type of color coding, maybe outlines
+
+save inventory as files
+load inventory from files
+	asign inventory to player
+
+create items with descriptions, names, color and shape. 
+
+add ability to view item descriptions
+add ability to click links to the original item/wiki (maybe)
+

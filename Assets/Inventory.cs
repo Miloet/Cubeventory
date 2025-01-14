@@ -1,19 +1,50 @@
 using Unity.Netcode;
 using UnityEngine;
+using System.Collections.Generic;
 
-public class Inventory : MonoBehaviour
+public class Inventory : NetworkBehaviour
 {
     public int strScore = 15;
     public static GameObject row;
 
+    public static HashSet<Inventory> inventories = new HashSet<Inventory>();
+    [System.NonSerialized] public RectTransform rectTransform;
+
+
     private void Start()
     {
-        if(row == null)
+        if (row == null)
         {
             row = Resources.Load<GameObject>("InventoryRow");
         }
-        UpdateInventorySpace(strScore);
+        
+        rectTransform = GetComponent<RectTransform>();
+        inventories.Add(this);
+
+        if (!IsOwner)
+            RequestStrServerRPC();
+        else
+            SendStrServerRPC(strScore);
     }
+
+    public override void OnDestroy()
+    {
+        base.OnDestroy();
+        inventories.Remove(this);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestStrServerRPC()
+    {
+        RequestStrClientRPC();
+    }
+    [ClientRpc]
+    public void RequestStrClientRPC()
+    {
+        if(IsOwner)
+            SendStrServerRPC(strScore);
+    }
+
 
     [ServerRpc(RequireOwnership = true)]
     public void SendStrServerRPC(int str)
@@ -50,5 +81,10 @@ public class Inventory : MonoBehaviour
         }
     }
 
+
+    public ulong GetOwner()
+    {
+        return OwnerClientId;
+    }
 
 }
