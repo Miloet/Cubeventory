@@ -8,7 +8,11 @@ a desync caused by a networkvaribles recognizing that they have been changed, no
 
 joining server with a code
 
-more clearly show ownership of item with some type of color coding, maybe outlines
+MINOR BUG FIXES and ADDITIONS: 
+fix the ui clickability. 
+make a copy and paste button for the code.
+make a name plate above each inventory showing the respective owners name and color
+
 
 save inventory as files
 load inventory from files
@@ -20,8 +24,10 @@ add ability to view item descriptions
 add ability to click links to the original item/wiki (maybe)
 
 
+
+
 TURN IN:
 
 there was no built in collision for the ui meaning I had to implement it myself
 
-
+fixing a lobby system was imo pretty important and doing so had it challenges. one: having to use unity services, they were fairly stable and easy to work with but the documentation in certain parts was fairly lacking. two: ui elements messing up

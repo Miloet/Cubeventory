@@ -8,12 +8,12 @@ public class MouseBehaviour : NetworkBehaviour
 
     public static MouseBehaviour instance;
 
+    public string playerName;
     public ulong PlayerID;
     public Canvas canvas;
     public Transform hand;
 
     public Color playerColor;
-
 
     private void Start()
     {
@@ -39,9 +39,13 @@ public class MouseBehaviour : NetworkBehaviour
 
             GetComponent<Image>().enabled = false;
             
-            RequestInventoryServerRPC(NetworkObject.OwnerClientId);
+            if(IsServer && MyNetwork.host_isPlayer) RequestInventoryServerRPC(NetworkObject.OwnerClientId);
+            if(!IsServer) RequestInventoryServerRPC(NetworkObject.OwnerClientId);
 
-            playerColor = new Color(Random.Range(0f,1f), Random.Range(0f, 1f), Random.Range(0f, 1f),1);
+            playerName = MyNetwork.player_name;
+            playerColor = MyNetwork.player_color;
+
+            //playerColor = new Color(Random.Range(0f,1f), Random.Range(0f, 1f), Random.Range(0f, 1f),1);
         }
         
     }
