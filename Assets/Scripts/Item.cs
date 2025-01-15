@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using Unity.Collections;
 using Unity.Netcode;
@@ -13,14 +14,19 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     public string name;
     public string description;
     public Color color;
-    public NetworkVariable<bool> obstructed = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    public NetworkVariable<Color> outlineColor = new NetworkVariable<Color>(Color.black, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    
 
     public bool[,] weight = new bool[1, 1];
     private Image[] grid;
     private Transform gridObj;
+    public Transform visual;
+
+    public Transform outline;
+    public Outline[] outlines;
+    
 
     public Animator animator;
-    public Transform visual;
 
     private TextMeshProUGUI nameText;
 
@@ -36,6 +42,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     [SerializeField] private float rotationAmount = 20;
     [SerializeField] private float rotationSpeed = 20;
 
+    public static HashSet<Item> allInventoryItems = new HashSet<Item>();
     
 
     private void Start()
@@ -44,7 +51,6 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         {
             RequestItemFromServerRPC();
         }
-        obstructed.OnValueChanged += UpdateColor;
     }
 
     private void Awake()
@@ -54,17 +60,46 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
 
         visual = transform.Find("Visual");
         gridObj = visual.Find("Animator/Grid");
+        outline = visual.Find("Animator/Outline");
         nameText = GetComponentInChildren<TextMeshProUGUI>();
 
-        if(MouseBehaviour.canvas != null) visual.SetParent(MouseBehaviour.canvas.transform, true);
+        outlineColor.OnValueChanged += UpdateOutlineColor;
+
+
+        if (MouseBehaviour.instance != null && MouseBehaviour.instance.canvas != null) visual.SetParent(MouseBehaviour.instance.canvas.transform, true);
     }
 
-    public void UpdateColor(bool previous, bool current)
+    private void OnDisable()
     {
-        foreach (Image i in grid)
+        outlineColor.OnValueChanged -= UpdateOutlineColor;
+    }
+
+    [ServerRpc(RequireOwnership = true)]
+    public void UpdateColorServerRPC(bool obstructed)
+    {
+        UpdateColorClientRPC(obstructed);
+    }
+    [ClientRpc]
+    public void UpdateColorClientRPC(bool obstructed)
+    {
+        foreach(Image i in grid)
         {
-            i.color = current ? Color.red : color;
+            i.color = obstructed ? Color.red : color;
         }
+    }
+    public void UpdateOutlineColor(Color previous, Color current)
+    {
+        foreach(Outline line in outlines)
+        {
+            line.effectColor = current;
+        }
+    }
+
+    protected override void OnOwnershipChanged(ulong previous, ulong current)
+    {
+        base.OnOwnershipChanged(previous, current);
+
+        if(MouseBehaviour.instance.PlayerID == current) outlineColor.Value = MouseBehaviour.instance.playerColor;
     }
 
     #region Create Item
@@ -74,11 +109,11 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         if (IsOwner)
         {
             if (inPlace)
-                NetworkObject.TrySetParent(MouseBehaviour.canvas.transform, true);
+                NetworkObject.TrySetParent(MouseBehaviour.instance.canvas.transform, true);
             else
-                NetworkObject.TrySetParent(MouseBehaviour.hand, true);
+                NetworkObject.TrySetParent(MouseBehaviour.instance.hand, true);
         }
-        visual.SetParent(MouseBehaviour.canvas.transform, true);
+        visual.SetParent(MouseBehaviour.instance.canvas.transform, true);
         hasBeenDefined = true;
         this.name = name;
         this.description = description;
@@ -91,8 +126,12 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         this.weight = cells;
         this.color = color;
 
-
         UpdateItem();
+
+        if (IsOwner)
+        {
+            outlineColor.Value = MouseBehaviour.instance.playerColor;
+        }
     }
 
     public void UpdateItem()
@@ -108,6 +147,10 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
             for (int i = 0; i < totalCells - original; i++)
             {
                 Instantiate(itemCell, gridObj);
+                var line = Instantiate(itemCell, outline)
+                    .AddComponent<Outline>();
+
+                line.effectDistance = new Vector2(2, -2);
             }
         }
 
@@ -116,11 +159,13 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
             int original = gridObj.childCount;
             for (int i = 0; i < original - totalCells; i++)
             {
-                Destroy(transform.GetChild(i));
+                Destroy(gridObj.GetChild(i));
+                Destroy(outline.transform.GetChild(i));
             }
         }
         
         grid = gridObj.GetComponentsInChildren<Image>();
+        outlines = outline.GetComponentsInChildren<Outline>();
 
 
         for (int i = 0; i < weight.Length; i++)
@@ -128,8 +173,13 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
             grid[i].enabled = weight[i%weight.GetLength(0), i/weight.GetLength(0)];
             grid[i].color = color;
         }
+        for (int i = 0; i < weight.Length; i++)
+        {
+            outlines[i].enabled = weight[i % weight.GetLength(0), i / weight.GetLength(0)];
+            outlines[i].effectColor = outlineColor.Value;
+        }
 
-        gridObj.GetComponent<GridLayoutGroup>().constraintCount = weight.GetLength(0);
+            gridObj.GetComponent<GridLayoutGroup>().constraintCount = weight.GetLength(0);
     }
     [ServerRpc(RequireOwnership = false)]
     public void SendItemServerRPC(string name, string description, bool[] weight, uint width, Color color)
@@ -161,9 +211,10 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     public void OnBeginDrag(PointerEventData eventData)
     {
         if(!IsOwner) return;
-        NetworkObject.TrySetParent(MouseBehaviour.canvas.transform, true);
+        NetworkObject.TrySetParent(MouseBehaviour.instance.canvas.transform, true);
         isDragging = true;
-        obstructed.Value = false;
+        PlaceServerRPC(false);
+        UpdateColorServerRPC(false);
     }
     public void OnDrag(PointerEventData eventData)
     {
@@ -211,32 +262,30 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
 
             #endregion
 
-
             CheckForOverlap();
+            PlaceServerRPC(true);
 
-
-            if (ownerId != MouseBehaviour.PlayerID)
+            if (ownerId != MouseBehaviour.instance.PlayerID)
             {
                 RequestOwnershipChangeServerRPC(ownerId, transform.position);
             }
         }
         else
         {
-            NetworkObject.TrySetParent(MouseBehaviour.hand, true);
+            NetworkObject.TrySetParent(MouseBehaviour.instance.hand, true);
         }
     }
 
     public void CheckForOverlap()
     {
         RectTransform rect = ((RectTransform)transform);
-        Item[] allItems = FindObjectsByType<Item>(FindObjectsSortMode.None);
-        foreach(Item item in allItems)
+        foreach(Item item in allInventoryItems)
         {
             if (item == this) continue;
 
             if (item.RectOverlap(rect))
             {
-                obstructed.Value = true;
+                UpdateColorServerRPC(true);
                 break;
             }
         }
@@ -256,7 +305,17 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         }
         transform.position = position;
     }
-
+    [ServerRpc(RequireOwnership = true)]
+    public void PlaceServerRPC(bool inInventory)
+    {
+        PlaceClientRPC(inInventory);
+    }
+    [ClientRpc]
+    public void PlaceClientRPC(bool inInventory)
+    {
+        if(inInventory) allInventoryItems.Add(this);
+        else allInventoryItems.Remove(this);
+    }
 
     #endregion
 

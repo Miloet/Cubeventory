@@ -1,22 +1,29 @@
 using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class MouseBehaviour : NetworkBehaviour
 {
 
-    public static ulong PlayerID;
-    public static Canvas canvas;
-    public static Transform hand;
+    public static MouseBehaviour instance;
+
+    public ulong PlayerID;
+    public Canvas canvas;
+    public Transform hand;
+
+    public Color playerColor;
+
 
     private void Start()
     {
         canvas = FindFirstObjectByType<Canvas>();
         if (IsServer)
         {
-            if (canvas != null)
+            var can = FindFirstObjectByType<Canvas>();
+            if (can != null)
             {
-                NetworkObject.TrySetParent(canvas.transform, true);
+                NetworkObject.TrySetParent(can.transform, true);
             }
             else
             {
@@ -25,10 +32,16 @@ public class MouseBehaviour : NetworkBehaviour
         }
         if(IsOwner)
         {
+            instance = this;
             PlayerID = NetworkObject.OwnerClientId;
-            GetComponent<Image>().enabled = false;
             hand = canvas.transform.Find("Hand");
+
+
+            GetComponent<Image>().enabled = false;
+            
             RequestInventoryServerRPC(NetworkObject.OwnerClientId);
+
+            playerColor = new Color(Random.Range(0f,1f), Random.Range(0f, 1f), Random.Range(0f, 1f),1);
         }
         
     }

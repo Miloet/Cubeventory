@@ -11,8 +11,8 @@ public class ItemSpawner : MonoBehaviour
         var g = Instantiate(item);
         NetworkObject obj = g.GetComponent<NetworkObject>();
         obj.Spawn();
-        obj.ChangeOwnership(MouseBehaviour.PlayerID);
-        obj.TrySetParent(MouseBehaviour.canvas.transform);
+        obj.ChangeOwnership(MouseBehaviour.instance.PlayerID);
+        obj.TrySetParent(MouseBehaviour.instance.canvas.transform);
 
         var i = g.GetComponent<Item>();
         i.SendItemServerRPC("ITEM", "DESCRIPTION", Item.WeightCube(2, 2), 2, Color.white);

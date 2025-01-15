@@ -4,6 +4,7 @@
 
 
 when giving an item to a client and it becomes obscured it will cause a desync for some reason? (might be fixed but give it a look anyhow)
+a desync caused by a networkvaribles recognizing that they have been changed, not set, caused a bug which made the color of items not update properly. for SOME reason this also fixed the part of the bug where the position wasn't properly updating either. rather wacky
 
 joining server with a code
 
@@ -17,4 +18,10 @@ create items with descriptions, names, color and shape.
 
 add ability to view item descriptions
 add ability to click links to the original item/wiki (maybe)
+
+
+TURN IN:
+
+there was no built in collision for the ui meaning I had to implement it myself
+
 
