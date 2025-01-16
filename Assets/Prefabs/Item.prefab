@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 8826641843650806938}
   - component: {fileID: 5180639809912923988}
   - component: {fileID: 1605352740897621295}
-  - component: {fileID: 183530563681049601}
   - component: {fileID: 1971834279070866932}
   m_Layer: 5
   m_Name: Item
@@ -35,6 +34,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6653680582348048177}
+  - {fileID: 6928682314893701615}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -93,11 +93,12 @@ MonoBehaviour:
   color: {r: 0, g: 0, b: 0, a: 0}
   outlineColor:
     m_InternalValue: {r: 1, g: 1, b: 1, a: 1}
-  obstructed:
-    m_InternalValue: 0
+  inventoryPosition: {x: 0, y: 0}
   visual: {fileID: 6653680582348048177}
-  outline: {fileID: 0}
+  hitboxes: {fileID: 6928682314893701615}
+  outline: {fileID: 6344220257562091436}
   outlines: []
+  outlineImages: []
   animator: {fileID: 942793877726137901}
   positionLerp: 0.1
   rotationAmount: 0.3
@@ -115,37 +116,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   copyFrom: {fileID: 6176786960517759896}
-  offset: 24
---- !u!114 &183530563681049601
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 322179036195360952}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
+  offset: 16
 --- !u!114 &1971834279070866932
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -237,10 +208,10 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 4
-  m_StartCorner: 0
+  m_StartCorner: 2
   m_StartAxis: 0
   m_CellSize: {x: 16, y: 16}
-  m_Spacing: {x: 24, y: 24}
+  m_Spacing: {x: 16, y: 16}
   m_Constraint: 1
   m_ConstraintCount: 2
 --- !u!114 &1656835505231848653
@@ -331,8 +302,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4278190080
-  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -355,7 +326,7 @@ MonoBehaviour:
   m_enableAutoSizing: 1
   m_fontSizeMin: 0
   m_fontSizeMax: 75
-  m_fontStyle: 3
+  m_fontStyle: 1
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
@@ -393,6 +364,41 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &5159817017186587398
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6928682314893701615}
+  m_Layer: 5
+  m_Name: Hitbox
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &6928682314893701615
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5159817017186587398}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5015373359619083546}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &5718843308520902452
 GameObject:
   m_ObjectHideFlags: 0
@@ -446,7 +452,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   copyFrom: {fileID: 6176786960517759896}
-  offset: 24
+  offset: 16
 --- !u!95 &942793877726137901
 Animator:
   serializedVersion: 7
@@ -560,10 +566,10 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 4
-  m_StartCorner: 0
+  m_StartCorner: 2
   m_StartAxis: 0
   m_CellSize: {x: 16, y: 16}
-  m_Spacing: {x: 24, y: 24}
+  m_Spacing: {x: 16, y: 16}
   m_Constraint: 1
   m_ConstraintCount: 2
 --- !u!114 &8829404294302156462

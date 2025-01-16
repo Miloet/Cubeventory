@@ -1,0 +1,14 @@
+
+there was no built in collision for the ui meaning I had to implement it myself
+
+fixing a lobby system was imo pretty important and doing so had it challenges. one: having to use unity services, they were fairly stable and easy to work with but the documentation in certain parts was fairly lacking. two: ui elements messing up
+
+creating a lobby system mostly involved intregating unity services lobby system as well as saving some data to be sent over and synced via RPC. i didnt feel the need to use a network varible as it only had to be synced once or upon a new player joining. 
+
+i wanted to have a menu that only appeared for the host and not the clients. it didnt quite work untill _____
+
+my biggest issues didnt come from the networking parts of the project but having to integrate collision and overlap detection for certain elements
+
+i made a tool for dnd based on this video by zee bashew https://www.youtube.com/watch?v=koKL1wSRLpk&ab_channel=ZeeBashew and https://cubeventory.com/ cuz i wanted to and i thought id be fun in a multiplayer context. where every play can see what tools the group has at their disposal and give the dm the ability(as the host) to make and give items as they see fit. additionally now the burden of keeping track of the files are on the dm rather than those silly players who so often lose track of things. 
+
+syncing of objects was fairly easy with network transforms. one clever implementation i did was having the visual component be client side only (aka not having a network object) and it being calculated on their side rather than sent over. this allowed for easy implementations of flair and juice whcih i took major insperation from balatro

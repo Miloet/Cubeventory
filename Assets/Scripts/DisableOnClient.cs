@@ -7,6 +7,16 @@ public class DisableOnClient : NetworkBehaviour
 {
     private void Start()
     {
-        if(!IsServer) gameObject.SetActive(false);
+        if (!IsServer)
+        {
+            Renderer[] all = GetComponentsInChildren<Renderer>();
+
+            foreach(var obj in all)
+            {
+                obj.enabled = false;
+            }
+            print("REMOVED ON CLIENT");
+            //gameObject.SetActive(false);
+        }
     }
 }

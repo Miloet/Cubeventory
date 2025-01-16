@@ -2,11 +2,10 @@ using System.Collections.Generic;
 using TMPro;
 using Unity.Collections;
 using Unity.Netcode;
-using Unity.VisualScripting;
-using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Linq;
 
 public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler
 {
@@ -15,16 +14,19 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     public string description;
     public Color color;
     public NetworkVariable<Color> outlineColor = new NetworkVariable<Color>(Color.black, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-    
 
+
+    public Vector2Int inventoryPosition;
     public bool[,] weight = new bool[1, 1];
-    private Image[] grid;
+    [System.NonSerialized] public Image[] grid;
     private Transform gridObj;
     public Transform visual;
+    [SerializeField] private Transform hitboxes;
 
     public Transform outline;
     public Outline[] outlines;
-    
+    public Image[] outlineImages;
+
 
     public Animator animator;
 
@@ -43,7 +45,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     [SerializeField] private float rotationSpeed = 20;
 
     public static HashSet<Item> allInventoryItems = new HashSet<Item>();
-    
+    public static Item lastPickedUp;
 
     private void Start()
     {
@@ -104,7 +106,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
 
     #region Create Item
 
-    public void DefineItem(string name,string description, bool[] weight, uint width, Color color, bool inPlace = false)
+    public void DefineItem(string name,string description, bool[] weight, uint width, uint height, Color color, bool inPlace = false)
     {
         if (IsOwner)
         {
@@ -115,17 +117,25 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         }
         visual.SetParent(MouseBehaviour.instance.canvas.transform, true);
         hasBeenDefined = true;
-        this.name = name;
-        this.description = description;
+        if(name != "") this.name = name;
+        if (description != "") this.description = description;
 
-        bool[,] cells = new bool[width, weight.Length / width];
-        for (int i = 0; i < weight.Length; i++)
+        if (weight.Length != 0)
         {
-            cells[i % width, i / width] = weight[i];
+            bool[,] cells = new bool[width, height];
+            for (int i = 0; i < width*height; i++)
+            {
+                cells[i % width, i / width] = weight[i];
+            }
+            this.weight = cells;
+            if (color.a > 0)
+            {
+                this.color = color;
+                this.color.a = 1;
+            }
         }
-        this.weight = cells;
-        this.color = color;
 
+        
         UpdateItem();
 
         if (IsOwner)
@@ -134,12 +144,10 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         }
     }
 
-    public void UpdateItem()
+    public async void UpdateItem()
     {
         nameText.text = name;
         float totalCells = weight.Length;// * weight.GetLength(1);
-        
-
 
         if(gridObj.childCount < totalCells)
         {
@@ -159,37 +167,62 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
             int original = gridObj.childCount;
             for (int i = 0; i < original - totalCells; i++)
             {
-                Destroy(gridObj.GetChild(i));
-                Destroy(outline.transform.GetChild(i));
+                Destroy(gridObj.GetChild(i).gameObject);
+                Destroy(outline.transform.GetChild(i).gameObject);
             }
         }
         
         grid = gridObj.GetComponentsInChildren<Image>();
         outlines = outline.GetComponentsInChildren<Outline>();
-
+        outlineImages = outline.GetComponentsInChildren<Image>();
 
         for (int i = 0; i < weight.Length; i++)
         {
-            grid[i].enabled = weight[i%weight.GetLength(0), i/weight.GetLength(0)];
+            bool enable = weight[i % weight.GetLength(0), i / weight.GetLength(0)];
+
+            grid[i].enabled = enable;
+            outlineImages[i].enabled = enable;
+            outlines[i].effectColor = outlineColor.Value;
             grid[i].color = color;
         }
-        for (int i = 0; i < weight.Length; i++)
+
+            gridObj.GetComponent<GridLayoutGroup>().constraintCount = weight.GetLength(1);
+            outline.GetComponent<GridLayoutGroup>().constraintCount = weight.GetLength(1);
+
+        await SetHitbox();
+    }
+    private async Awaitable SetHitbox()
+    {
+        foreach(Transform child in hitboxes)
         {
-            outlines[i].enabled = weight[i % weight.GetLength(0), i / weight.GetLength(0)];
-            outlines[i].effectColor = outlineColor.Value;
+            Destroy(child.gameObject);
         }
 
-            gridObj.GetComponent<GridLayoutGroup>().constraintCount = weight.GetLength(0);
+        await Awaitable.NextFrameAsync();
+
+        foreach(Image child in grid)
+        {
+            if (!child.isActiveAndEnabled) continue;
+
+            var g = Instantiate(itemCell, hitboxes);
+            g.transform.localPosition = child.transform.localPosition;
+            var image = g.GetComponent<Image>();
+            image.raycastTarget = true;
+            image.color = new Color(0,0,0,0);
+        }
+
     }
+
+
     [ServerRpc(RequireOwnership = false)]
-    public void SendItemServerRPC(string name, string description, bool[] weight, uint width, Color color)
+    public void SendItemServerRPC(string name, string description, bool[] weight, uint width, uint height, Color color)
     {
-        SendItemClientRPC(name, description, weight, width, color);
+        SendItemClientRPC(name, description, weight, width, height, color);
     }
     [ClientRpc]
-    public void SendItemClientRPC(string name, string description, bool[] weight, uint width, Color color)
+    public void SendItemClientRPC(string name, string description, bool[] weight, uint width, uint height, Color color)
     {
-        DefineItem(name, description, weight, width, color);
+        DefineItem(name, description, weight, width, height, color);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -202,7 +235,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     public void RequestItemFromClientRPC()
     {
         if (IsServer)
-            SendItemServerRPC(name, description, Convert(weight), (uint)weight.GetLength(0), color);
+            SendItemServerRPC(name, description, Convert(weight), (uint)weight.GetLength(0), (uint)weight.GetLength(1), color);
     }
 
     #endregion
@@ -213,6 +246,8 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         if(!IsOwner) return;
         NetworkObject.TrySetParent(MouseBehaviour.instance.canvas.transform, true);
         isDragging = true;
+        lastPickedUp = this;
+        inventoryPosition = new Vector2Int(-1, -1);
         PlaceServerRPC(false);
         UpdateColorServerRPC(false);
     }
@@ -231,13 +266,16 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
 
         bool overlap = false;
         RectTransform inventory = null;
+        Transform rows = null;
         ulong ownerId = 0;
+
 
         foreach(Inventory inv in Inventory.inventories)
         {
             var rt = inv.rectTransform;
             overlap = RectOverlap(rt);
             ownerId = inv.GetOwner();
+            rows = inv.inventoryRows;
             inventory = rt;
             if (overlap) break;
         }
@@ -249,14 +287,16 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
             RectTransform rect = ((RectTransform)transform);
             Vector2 bottemLeftSelf = rect.position - (Vector3)(rect.rect.size / 2f);
             Vector2 invRect = inventory.rect.size;
-            invRect.y = inventory.childCount * inventoryCellSize;
+            invRect.y = rows.childCount * inventoryCellSize;
             Vector2 bottemLeftInv = inventory.position - (Vector3)(invRect / 2f);
             Vector2 diff = bottemLeftSelf - bottemLeftInv;
             Vector2Int pos = new Vector2Int(
                 Mathf.RoundToInt(diff.x / inventoryCellSize),
                 Mathf.RoundToInt(diff.y / inventoryCellSize));
 
-            pos.Clamp(new Vector2Int(0, 0), new Vector2Int(15 - weight.GetLength(0), inventory.childCount - weight.GetLength(1)));
+            pos.Clamp(new Vector2Int(0, 0), new Vector2Int(15 - weight.GetLength(0), rows.childCount - weight.GetLength(1)));
+
+            inventoryPosition = pos;
 
             rect.position =(rect.rect.size / 2f) + bottemLeftInv + pos * inventoryCellSize;
 
@@ -273,17 +313,30 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         else
         {
             NetworkObject.TrySetParent(MouseBehaviour.instance.hand, true);
+            transform.SetAsLastSibling();
+            visual.transform.SetAsLastSibling();
         }
     }
 
     public void CheckForOverlap()
     {
         RectTransform rect = ((RectTransform)transform);
-        foreach(Item item in allInventoryItems)
+        List<Item> semiOverlap = new();
+
+        foreach (Item item in allInventoryItems)
         {
             if (item == this) continue;
 
             if (item.RectOverlap(rect))
+            {
+                semiOverlap.Add(item);
+            }
+        }
+
+        
+        foreach (Item item in semiOverlap)
+        {
+            if(ItemOverlap(item))
             {
                 UpdateColorServerRPC(true);
                 break;
@@ -376,6 +429,45 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         else return false;
     }
 
+    private bool ItemOverlap(Item other)
+    {
+        Vector2Int end =
+            new Vector2Int(
+                Mathf.Min(
+                    inventoryPosition.x + weight.GetLength(0), 
+                    other.inventoryPosition.x + other.weight.GetLength(0)),
+
+                Mathf.Min(
+                    inventoryPosition.y + weight.GetLength(1),
+                    other.inventoryPosition.y + other.weight.GetLength(1))
+            );
+        Vector2Int start =
+            new Vector2Int(
+                Mathf.Max(
+                    inventoryPosition.x,
+                    other.inventoryPosition.x),
+
+                Mathf.Max(
+                    inventoryPosition.y,
+                    other.inventoryPosition.y)
+            );
+
+
+        for (int x = start.x; x < end.x; x++)
+        {
+            for (int y = start.y; y < end.y; y++)
+            {
+                if (weight[x - inventoryPosition.x,  y - inventoryPosition.y] &&
+                    other.weight[x - other.inventoryPosition.x, y - other.inventoryPosition.y])
+                {
+
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
 
     public int GetWeight()
     {
@@ -401,4 +493,5 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         }
         return result;
     }
+
 }

@@ -1,14 +1,19 @@
 using Unity.Netcode;
 using UnityEngine;
 using System.Collections.Generic;
+using TMPro;
 
 public class Inventory : NetworkBehaviour
 {
-    public int strScore = 15;
+    public int strScore;
     public static GameObject row;
 
     public static HashSet<Inventory> inventories = new HashSet<Inventory>();
     [System.NonSerialized] public RectTransform rectTransform;
+    public Transform inventoryRows;
+    
+    [System.NonSerialized] public string owner;
+    public TextMeshProUGUI ownerName;
 
 
     private void Start()
@@ -22,9 +27,9 @@ public class Inventory : NetworkBehaviour
         inventories.Add(this);
 
         if (!IsOwner)
-            RequestStrServerRPC();
+            RequestInvServerRPC();
         else
-            SendStrServerRPC(strScore);
+            SendInvServerRPC(strScore = Random.Range(10, 20), MyNetwork.player_name);
     }
 
     public override void OnDestroy()
@@ -34,26 +39,28 @@ public class Inventory : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void RequestStrServerRPC()
+    public void RequestInvServerRPC()
     {
-        RequestStrClientRPC();
+        RequestInvClientRPC();
     }
     [ClientRpc]
-    public void RequestStrClientRPC()
+    public void RequestInvClientRPC()
     {
         if(IsOwner)
-            SendStrServerRPC(strScore);
+            SendInvServerRPC(strScore, MyNetwork.player_name);
     }
 
 
     [ServerRpc(RequireOwnership = true)]
-    public void SendStrServerRPC(int str)
+    public void SendInvServerRPC(int str, string name)
     {
-        SendStrClientRPC(str);
+        SendInvClientRPC(str, name);
     }
     [ClientRpc]
-    public void SendStrClientRPC(int str)
+    public void SendInvClientRPC(int str, string name)
     {
+        owner = name;
+        ownerName.text = $"{owner}'s Inventory";
         UpdateInventorySpace(str);
     }
 
@@ -61,24 +68,35 @@ public class Inventory : NetworkBehaviour
     {
         strScore = Mathf.Clamp(str, 1, 30);
 
-        if (transform.childCount == strScore) return;
+        if (inventoryRows.childCount != strScore)
+        {
+            int original = inventoryRows.childCount;
+            if (inventoryRows.childCount > strScore)
+            {
+                for (int i = 0; i < original - strScore; i++)
+                {
+                    Destroy(inventoryRows.GetChild(i).gameObject);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < strScore - original; i++)
+                {
+                    Instantiate(row, inventoryRows);
+                }
+            }
+        }
 
-        int original = transform.childCount;
-        if (transform.childCount > strScore)
-        {
-            
-            for (int i = 0; i < original - strScore; i++)
-            {
-                Destroy(transform.GetChild(i));
-            }
-        }
-        else
-        {
-            for (int i = 0; i < strScore - original; i++)
-            {
-                Instantiate(row, transform);
-            }
-        }
+        RectTransform singleRow = ((RectTransform)row.transform);
+        size = singleRow.sizeDelta * singleRow.localScale;
+
+    }
+
+    private Vector2 size;
+
+    private void LateUpdate()
+    {
+        rectTransform.sizeDelta = new Vector2(size.x, size.y * inventoryRows.childCount);
     }
 
 
@@ -86,5 +104,4 @@ public class Inventory : NetworkBehaviour
     {
         return OwnerClientId;
     }
-
 }

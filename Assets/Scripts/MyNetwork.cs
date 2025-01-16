@@ -170,7 +170,7 @@ public class MyNetwork : MonoBehaviour
             return false;
         }
 
-        if (player_colorInput.color != Color.white) player_color = player_colorInput.color;
+        if (player_colorInput.color != Color.white && player_colorInput.color != Color.black) player_color = player_colorInput.color;
         else
         {
             WrongInformation();
@@ -187,8 +187,7 @@ public class MyNetwork : MonoBehaviour
             return false;
         }
 
-        if (host_nameInput.text != "") player_name = host_nameInput.text;
-        else
+        if (host_nameInput.text == "") 
         {
             WrongInformation();
             return false;
