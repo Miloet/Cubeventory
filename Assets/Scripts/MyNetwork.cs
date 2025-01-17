@@ -2,7 +2,6 @@ using TMPro;
 using Unity.Netcode;
 using Unity.Services.Lobbies.Models;
 using Unity.Services.Lobbies;
-using UnityEditor.UI;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -11,7 +10,8 @@ using System.Collections;
 using Unity.Services.Core;
 using System;
 using Unity.Services.Authentication;
-using Unity.VisualScripting;
+using NUnit.Framework.Constraints;
+using System.Linq;
 
 public class MyNetwork : MonoBehaviour
 {
@@ -40,7 +40,7 @@ public class MyNetwork : MonoBehaviour
     {
         try
         {
-            await UnityServices.InitializeAsync();
+            await Authenticate(RandomString(20));
             await SignIn();
         }
         catch (Exception e)
@@ -49,7 +49,17 @@ public class MyNetwork : MonoBehaviour
         }
     }
 
+    public static string RandomString(int length)
+    {
+        System.Random random = new System.Random(DateTime.Now.GetHashCode());
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        return new string(Enumerable.Repeat(chars, length)
+            .Select(s => s[random.Next(s.Length)]).ToArray());
+    }
+
     #region Auth Events
+
+
 
     void SetupEvents()
     {
@@ -76,9 +86,16 @@ public class MyNetwork : MonoBehaviour
         };
     }
 
+    public async Task Authenticate(string playerName)
+    {
+        InitializationOptions initializationOptions = new InitializationOptions();
+        initializationOptions.SetProfile(playerName);
+
+        await UnityServices.InitializeAsync(initializationOptions);
+    }
+
     async Task SignIn()
     {
-        
         try
         {
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
@@ -123,6 +140,12 @@ public class MyNetwork : MonoBehaviour
             return;
         }
 
+        if(player_joinCode.text == "")
+        {
+            WrongInformation("ERROR: no lobby code");
+            return;
+        }
+
         try
         {
             lobby = await LobbyService.Instance.JoinLobbyByCodeAsync(player_joinCode.text);
@@ -131,7 +154,7 @@ public class MyNetwork : MonoBehaviour
         catch (LobbyServiceException e)
         {
             Debug.Log(e);
-            WrongInformation();
+            WrongInformation("ERROR: failed to join lobby");
         }
     }
     public async Awaitable StartHost()
@@ -155,7 +178,7 @@ public class MyNetwork : MonoBehaviour
         catch (LobbyServiceException e)
         {
             Debug.Log(e);
-            WrongInformation();
+            WrongInformation("ERROR: lobby failed to start :(");
         }
     }
 
@@ -166,14 +189,14 @@ public class MyNetwork : MonoBehaviour
         if (player_nameInput.text != "") player_name = player_nameInput.text;
         else
         {
-            WrongInformation();
+            WrongInformation("ERROR: no player name");
             return false;
         }
 
         if (player_colorInput.color != Color.white && player_colorInput.color != Color.black) player_color = player_colorInput.color;
         else
         {
-            WrongInformation();
+            WrongInformation("ERROR: color cannot be black or white. be creative, dummy >:[");
             return false;
         }
 
@@ -183,26 +206,28 @@ public class MyNetwork : MonoBehaviour
     {
         if(host_isPlayer && !Player_CheckInfo())
         {
-            WrongInformation();
+            WrongInformation("ERROR: incorrect player credentials");
             return false;
         }
 
         if (host_nameInput.text == "") 
         {
-            WrongInformation();
+            WrongInformation("ERROR: No lobby name");
             return false;
         }
 
         return true;
     }
 
-    public void WrongInformation()
+    public void WrongInformation(string message)
     {
         thunderAudioSource.Play();
         skeletonAnimator.SetTrigger("WrongInfo");
 
         playerButton.interactable = true;
         hostButton.interactable = true;
+
+        ChatSystem.SystemSendMessage(message, 10);
     }
 
 

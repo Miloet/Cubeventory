@@ -3,24 +3,28 @@
 !add flair / juice to the moving of the objects.!
 
 
-when giving an item to a client and it becomes obscured it will cause a desync for some reason? (might be fixed but give it a look anyhow)
-a desync caused by a networkvaribles recognizing that they have been changed, not set, caused a bug which made the color of items not update properly. for SOME reason this also fixed the part of the bug where the position wasn't properly updating either. rather wacky
+!when giving an item to a client and it becomes obscured it will cause a desync for some reason? (might be fixed but give it a look anyhow)
+a desync caused by a networkvaribles recognizing that they have been changed, not set, caused a bug which made the color of items not update properly. for SOME reason this also fixed the part of the bug where the position wasn't properly updating either. rather wacky!
 
-joining server with a code
+!joining server with a code!
+!make a copy and paste button for the code.!
+!make a name plate above each inventory showing the respective owners name and color!
 
 MINOR BUG FIXES and ADDITIONS: 
 fix the ui clickability. 
-make a copy and paste button for the code.
-make a name plate above each inventory showing the respective owners name and color
+
+
 
 
 save inventory as files
 load inventory from files
 	asign inventory to player
 
-create items with descriptions, names, color and shape. 
-
+create items with descriptions, names, color and shape.
 add ability to view item descriptions
 add ability to click links to the original item/wiki (maybe)
 
-
+small bugs for the clients:
+mouse not visible on eachothers screens
+the dragging lerp for rotation and interpolation is WAY too high
+rotation and scale sometimes get stuck for the other person

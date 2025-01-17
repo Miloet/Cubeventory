@@ -1,11 +1,9 @@
 using System.Collections.Generic;
 using TMPro;
-using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using System.Linq;
 
 public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler
 {
@@ -75,6 +73,14 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     {
         outlineColor.OnValueChanged -= UpdateOutlineColor;
     }
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+        allInventoryItems.Remove(this);
+        if(lastPickedUp == this) lastPickedUp = null;
+        Destroy(visual.gameObject);
+    }
+
 
     [ServerRpc(RequireOwnership = true)]
     public void UpdateColorServerRPC(bool obstructed)
@@ -123,19 +129,19 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         if (weight.Length != 0)
         {
             bool[,] cells = new bool[width, height];
-            for (int i = 0; i < width*height; i++)
+            for (int i = 0; i < weight.Length; i++)
             {
                 cells[i % width, i / width] = weight[i];
             }
             this.weight = cells;
-            if (color.a > 0)
-            {
-                this.color = color;
-                this.color.a = 1;
-            }
+            
+        }
+        if (color.a > 0)
+        {
+            this.color = color;
+            this.color.a = 1;
         }
 
-        
         UpdateItem();
 
         if (IsOwner)
@@ -186,8 +192,8 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
             grid[i].color = color;
         }
 
-            gridObj.GetComponent<GridLayoutGroup>().constraintCount = weight.GetLength(1);
-            outline.GetComponent<GridLayoutGroup>().constraintCount = weight.GetLength(1);
+        gridObj.GetComponent<GridLayoutGroup>().constraintCount = weight.GetLength(1);
+        outline.GetComponent<GridLayoutGroup>().constraintCount = weight.GetLength(1);
 
         await SetHitbox();
     }
@@ -358,7 +364,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         }
         transform.position = position;
     }
-    [ServerRpc(RequireOwnership = true)]
+    [ServerRpc(RequireOwnership = false)]
     public void PlaceServerRPC(bool inInventory)
     {
         PlaceClientRPC(inInventory);

@@ -1,6 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
-using System.Collections.Generic;
+using UnityEngine.UI;
 
 
 public class DisableOnClient : NetworkBehaviour
@@ -9,14 +9,11 @@ public class DisableOnClient : NetworkBehaviour
     {
         if (!IsServer)
         {
-            Renderer[] all = GetComponentsInChildren<Renderer>();
 
-            foreach(var obj in all)
-            {
-                obj.enabled = false;
-            }
+        var mask = gameObject.AddComponent<RectMask2D>();
+        mask.padding = Vector4.one * 1000;
             print("REMOVED ON CLIENT");
-            //gameObject.SetActive(false);
+            gameObject.SetActive(false);
         }
     }
 }

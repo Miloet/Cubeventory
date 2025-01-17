@@ -1,7 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.UI;
-using System.Collections.Generic;
 
 public class MouseBehaviour : NetworkBehaviour
 {
@@ -17,13 +16,13 @@ public class MouseBehaviour : NetworkBehaviour
 
     private void Start()
     {
-        canvas = FindFirstObjectByType<Canvas>();
+        canvas = GameObject.Find("Canvas").GetComponent<Canvas>();
         if (IsServer)
         {
             var can = FindFirstObjectByType<Canvas>();
             if (can != null)
             {
-                NetworkObject.TrySetParent(can.transform, true);
+                NetworkObject.TrySetParent(can.transform.Find("Mice"), true);
             }
             else
             {
