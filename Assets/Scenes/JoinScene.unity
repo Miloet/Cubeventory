@@ -1095,7 +1095,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 400, y: -20}
+  m_AnchoredPosition: {x: 399.99994, y: -20}
   m_SizeDelta: {x: -1670, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &350004851
@@ -1417,7 +1417,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 400, y: -138}
+  m_AnchoredPosition: {x: 399.99994, y: -138}
   m_SizeDelta: {x: -1670, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &514368678
@@ -2318,7 +2318,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -400, y: -208}
+  m_AnchoredPosition: {x: -399.99994, y: -208}
   m_SizeDelta: {x: -1670, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &933565412
@@ -2591,7 +2591,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -400, y: 40}
+  m_AnchoredPosition: {x: -399.99994, y: 40}
   m_SizeDelta: {x: -1670, y: 70}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1071627526
@@ -3484,7 +3484,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 400, y: 60}
+  m_AnchoredPosition: {x: 399.99994, y: 60}
   m_SizeDelta: {x: -1670, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1659266479
@@ -4052,7 +4052,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -400, y: -90.60002}
+  m_AnchoredPosition: {x: -399.99994, y: -90.60002}
   m_SizeDelta: {x: -1670, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1786143058
@@ -4537,15 +4537,15 @@ Canvas:
   m_Enabled: 1
   serializedVersion: 3
   m_RenderMode: 0
-  m_Camera: {fileID: 0}
-  m_PlaneDistance: 100
-  m_PixelPerfect: 0
+  m_Camera: {fileID: 262427341}
+  m_PlaneDistance: 10
+  m_PixelPerfect: 1
   m_ReceivesEvents: 1
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: 25
+  m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 0

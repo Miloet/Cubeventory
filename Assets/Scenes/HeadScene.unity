@@ -5187,16 +5187,16 @@ Canvas:
   m_Enabled: 1
   serializedVersion: 3
   m_RenderMode: 0
-  m_Camera: {fileID: 0}
-  m_PlaneDistance: 100
-  m_PixelPerfect: 0
+  m_Camera: {fileID: 330585545}
+  m_PlaneDistance: 10
+  m_PixelPerfect: 1
   m_ReceivesEvents: 1
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
   m_AdditionalShaderChannelsFlag: 25
-  m_UpdateRectTransformForStandalone: 0
+  m_UpdateRectTransformForStandalone: 1
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
@@ -9947,7 +9947,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3cb48ceb264042c45b304b6ab1c67b58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rotate: 0
   itemPrefab: {fileID: 322179036195360952, guid: 170e485aab42fd44d8678167914cfb16, type: 3}
   nameField: {fileID: 1758203868}
   descriptionField: {fileID: 746167575}
@@ -11355,6 +11354,10 @@ PrefabInstance:
     - target: {fileID: 2130943085226611852, guid: 4214b57e615806c448ba9d993d629531, type: 3}
       propertyPath: m_RaycastTarget
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2130943085226611853, guid: 4214b57e615806c448ba9d993d629531, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -7.500002
       objectReference: {fileID: 0}
     - target: {fileID: 2130943085611863864, guid: 4214b57e615806c448ba9d993d629531, type: 3}
       propertyPath: m_AnchoredPosition.x

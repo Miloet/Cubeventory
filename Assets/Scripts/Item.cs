@@ -39,6 +39,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     Vector3 movementDelta;
     Vector3 rotationDelta;
     [SerializeField] private float positionLerp;
+    [SerializeField] private float flatSpeed;
     [SerializeField] private float rotationAmount = 20;
     [SerializeField] private float rotationSpeed = 20;
 
@@ -407,7 +408,8 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
             transform.position = position;
         }
 
-        visual.position = Vector3.Lerp(visual.position, transform.position, positionLerp);
+        float distance = Vector2.Distance(visual.position, transform.position) * positionLerp;
+        visual.position = Vector3.MoveTowards(visual.position, transform.position, (distance + flatSpeed) * Time.deltaTime);
 
         if (IsOwner)
         {

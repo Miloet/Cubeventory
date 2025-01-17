@@ -100,7 +100,8 @@ MonoBehaviour:
   outlines: []
   outlineImages: []
   animator: {fileID: 942793877726137901}
-  positionLerp: 0.1
+  positionLerp: 6
+  flatSpeed: 450
   rotationAmount: 0.3
   rotationSpeed: 10
 --- !u!114 &1605352740897621295
