@@ -8,6 +8,7 @@ public class ItemSpawner : MonoBehaviour
     public GameObject itemPrefab;
     public TMP_InputField nameField;
     public TMP_InputField descriptionField;
+    public TMP_InputField linkField;
     public FlexibleColorPicker colorPicker;
 
     private Toggle[,] toggles;
@@ -86,7 +87,7 @@ public class ItemSpawner : MonoBehaviour
 
 
 
-            item.SendItemServerRPC(item.name, item.description, GetRealWeight(weight), 
+            item.SendItemServerRPC(item.name, item.description, item.link, GetRealWeight(weight), 
                 (uint)weight.GetLength(0), (uint)weight.GetLength(1), item.color);
         }
     }
@@ -124,7 +125,7 @@ public class ItemSpawner : MonoBehaviour
 
         var item = g.GetComponent<Item>();
         Color c = colorPicker.color;
-        item.SendItemServerRPC(nameField.text, descriptionField.text, GetRealWeight(weight, out width, out height), width, height, c);
+        item.SendItemServerRPC(nameField.text, descriptionField.text, linkField.text, GetRealWeight(weight, out width, out height), width, height, c);
     }
 
     public bool[] GetRealWeight(bool[,] weight, out uint width, out uint height)

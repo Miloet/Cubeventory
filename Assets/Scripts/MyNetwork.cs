@@ -40,6 +40,7 @@ public class MyNetwork : MonoBehaviour
     {
         try
         {
+            host_nameInput.text = RandomString(10);
             await Authenticate(RandomString(20));
             await SignIn();
         }

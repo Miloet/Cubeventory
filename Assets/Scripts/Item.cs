@@ -7,10 +7,10 @@ using UnityEngine.UI;
 
 public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler
 {
-    
     public string name;
     public string description;
     public Color color;
+    public string link;
     public NetworkVariable<Color> outlineColor = new NetworkVariable<Color>(Color.black, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
 
@@ -113,7 +113,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
 
     #region Create Item
 
-    public void DefineItem(string name,string description, bool[] weight, uint width, uint height, Color color, bool inPlace = false)
+    public void DefineItem(string name,string description, string link, bool[] weight, uint width, uint height, Color color, bool inPlace = false)
     {
         if (IsOwner)
         {
@@ -126,6 +126,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         hasBeenDefined = true;
         if(name != "") this.name = name;
         if (description != "") this.description = description;
+        if (link != "") this.link = link;
 
         if (weight.Length != 0)
         {
@@ -222,14 +223,14 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
 
 
     [ServerRpc(RequireOwnership = false)]
-    public void SendItemServerRPC(string name, string description, bool[] weight, uint width, uint height, Color color)
+    public void SendItemServerRPC(string name, string description, string link, bool[] weight, uint width, uint height, Color color)
     {
-        SendItemClientRPC(name, description, weight, width, height, color);
+        SendItemClientRPC(name, description, link, weight, width, height, color);
     }
     [ClientRpc]
-    public void SendItemClientRPC(string name, string description, bool[] weight, uint width, uint height, Color color)
+    public void SendItemClientRPC(string name, string description, string link, bool[] weight, uint width, uint height, Color color)
     {
-        DefineItem(name, description, weight, width, height, color);
+        DefineItem(name, description, link, weight, width, height, color);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -242,7 +243,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     public void RequestItemFromClientRPC()
     {
         if (IsServer)
-            SendItemServerRPC(name, description, Convert(weight), (uint)weight.GetLength(0), (uint)weight.GetLength(1), color);
+            SendItemServerRPC(name, description, link, Convert(weight), (uint)weight.GetLength(0), (uint)weight.GetLength(1), color);
     }
 
     #endregion
@@ -254,6 +255,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         NetworkObject.TrySetParent(MouseBehaviour.instance.canvas.transform, true);
         isDragging = true;
         lastPickedUp = this;
+        ItemDescription.instance.OnItemChange(lastPickedUp);
         inventoryPosition = new Vector2Int(-1, -1);
         PlaceServerRPC(false);
         UpdateColorServerRPC(false);
@@ -301,7 +303,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
                 Mathf.RoundToInt(diff.x / inventoryCellSize),
                 Mathf.RoundToInt(diff.y / inventoryCellSize));
 
-            pos.Clamp(new Vector2Int(0, 0), new Vector2Int(15 - weight.GetLength(0), rows.childCount - weight.GetLength(1)));
+            pos.Clamp(new Vector2Int(0, 0), new Vector2Int(15 - weight.GetLength(1), rows.childCount - weight.GetLength(0)));
 
             inventoryPosition = pos;
 
@@ -314,6 +316,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
 
             if (ownerId != MouseBehaviour.instance.PlayerID)
             {
+                lastPickedUp = null;
                 RequestOwnershipChangeServerRPC(ownerId, transform.position);
             }
         }
