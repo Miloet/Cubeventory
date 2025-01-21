@@ -1,4 +1,4 @@
-
+Add that when player picks up item its kept at the same offset from their cursor as when they picked it up
 
 save inventory as files
 load inventory from files
