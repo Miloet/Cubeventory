@@ -4,12 +4,9 @@ save inventory as files
 load inventory from files
 	asign inventory to player
 
-create items with descriptions, names, color and shape.
-add ability to view item descriptions
-add ability to click links to the original item/wiki (maybe)
-
 MINOR BUG FIXES and ADDITIONS: 
-fix the ui clickability. 
+fix the ui clickability in join menu
+fix the item description having the background be too transparent
 
 small bugs for the clients:
 mouse not visible on eachothers screens

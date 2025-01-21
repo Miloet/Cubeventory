@@ -130,12 +130,8 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
 
         if (weight.Length != 0)
         {
-            bool[,] cells = new bool[width, height];
-            for (int i = 0; i < weight.Length; i++)
-            {
-                cells[i % width, i / width] = weight[i];
-            }
-            this.weight = cells;
+
+            this.weight = ItemSpawner.Unflatten2D(weight, (int)width);
             
         }
         if (color.a > 0)
@@ -194,8 +190,8 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
             grid[i].color = color;
         }
 
-        gridObj.GetComponent<GridLayoutGroup>().constraintCount = weight.GetLength(1);
-        outline.GetComponent<GridLayoutGroup>().constraintCount = weight.GetLength(1);
+        gridObj.GetComponent<GridLayoutGroup>().constraintCount = weight.GetLength(0);
+        outline.GetComponent<GridLayoutGroup>().constraintCount = weight.GetLength(0);
 
         await SetHitbox();
     }
@@ -223,14 +219,14 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
 
 
     [ServerRpc(RequireOwnership = false)]
-    public void SendItemServerRPC(string name, string description, string link, bool[] weight, uint width, uint height, Color color)
+    public void SendItemServerRPC(string name, string description, string link, bool[] weight, uint width, uint height, Color color, bool inPlace = false)
     {
-        SendItemClientRPC(name, description, link, weight, width, height, color);
+        SendItemClientRPC(name, description, link, weight, width, height, color, inPlace);
     }
     [ClientRpc]
-    public void SendItemClientRPC(string name, string description, string link, bool[] weight, uint width, uint height, Color color)
+    public void SendItemClientRPC(string name, string description, string link, bool[] weight, uint width, uint height, Color color, bool inPlace = false)
     {
-        DefineItem(name, description, link, weight, width, height, color);
+        DefineItem(name, description, link, weight, width, height, color, inPlace);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -292,22 +288,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         {
             #region Set Position
 
-            int inventoryCellSize = ((int)inventory.rect.width) / 15;
-            RectTransform rect = ((RectTransform)transform);
-            Vector2 bottemLeftSelf = rect.position - (Vector3)(rect.rect.size / 2f);
-            Vector2 invRect = inventory.rect.size;
-            invRect.y = rows.childCount * inventoryCellSize;
-            Vector2 bottemLeftInv = inventory.position - (Vector3)(invRect / 2f);
-            Vector2 diff = bottemLeftSelf - bottemLeftInv;
-            Vector2Int pos = new Vector2Int(
-                Mathf.RoundToInt(diff.x / inventoryCellSize),
-                Mathf.RoundToInt(diff.y / inventoryCellSize));
-
-            pos.Clamp(new Vector2Int(0, 0), new Vector2Int(15 - weight.GetLength(1), rows.childCount - weight.GetLength(0)));
-
-            inventoryPosition = pos;
-
-            rect.position =(rect.rect.size / 2f) + bottemLeftInv + pos * inventoryCellSize;
+            SetPositionInInventory(inventory, rows);
 
             #endregion
 
@@ -327,6 +308,41 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
             visual.transform.SetAsLastSibling();
         }
     }
+    public void SetPositionInInventory(RectTransform inventory, Transform rows)
+    {
+        int inventoryCellSize = ((int)inventory.rect.width) / 15;
+        RectTransform rect = ((RectTransform)transform);
+        Vector2 bottemLeftSelf = rect.position - (Vector3)(rect.rect.size / 2f);
+        Vector2 invRect = inventory.rect.size;
+        invRect.y = rows.childCount * inventoryCellSize;
+        Vector2 bottemLeftInv = inventory.position - (Vector3)(invRect / 2f);
+        Vector2 diff = bottemLeftSelf - bottemLeftInv;
+        Vector2Int pos = new Vector2Int(
+            Mathf.RoundToInt(diff.x / inventoryCellSize),
+            Mathf.RoundToInt(diff.y / inventoryCellSize));
+
+        pos.Clamp(new Vector2Int(0, 0), new Vector2Int(15 - weight.GetLength(1), rows.childCount - weight.GetLength(0)));
+
+        inventoryPosition = pos;
+
+        rect.position = (rect.rect.size / 2f) + bottemLeftInv + pos * inventoryCellSize;
+    }
+    public void SetPositionInInventory(Vector2Int position, Inventory inv)
+    {
+        RectTransform rect = (RectTransform)transform;
+        RectTransform invRectTrans = (RectTransform)inv.transform;
+
+        int inventoryCellSize = ((int)invRectTrans.rect.width) / 15;
+
+        Vector2 invRect = invRectTrans.rect.size;
+        invRect.y = inv.inventoryRows.childCount * inventoryCellSize;
+        Vector2 bottemLeftInv = invRectTrans.position - (Vector3)(invRect / 2f);
+
+        inventoryPosition = position;
+
+        rect.position = (rect.rect.size / 2f) + bottemLeftInv + position * inventoryCellSize;
+    }
+
 
     public void CheckForOverlap()
     {
@@ -427,7 +443,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     }
 
 
-    private bool RectOverlap(RectTransform image2rt)
+    public bool RectOverlap(RectTransform image2rt)
     {
         RectTransform image1rt = ((RectTransform)transform);
         Rect image1rect = image1rt.rect;

@@ -7,10 +7,10 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using System.Threading.Tasks;
 using System.Collections;
+using System.Collections.Generic;
 using Unity.Services.Core;
 using System;
 using Unity.Services.Authentication;
-using NUnit.Framework.Constraints;
 using System.Linq;
 
 public class MyNetwork : MonoBehaviour
@@ -35,6 +35,8 @@ public class MyNetwork : MonoBehaviour
 
     public Button hostButton;
     public Button playerButton;
+
+    public static HashSet<string> allPlayerNames = new HashSet<string>();
 
     async void Awake()
     {
@@ -173,6 +175,11 @@ public class MyNetwork : MonoBehaviour
             await SceneManager.LoadSceneAsync("HeadScene");
 
             NetworkManager.Singleton.StartHost();
+
+            if (host_isPlayer)
+            {
+                allPlayerNames.Add(player_name);
+            }
             //NetworkManager.Singleton.SceneManager.OnLoadComplete += NetworkManagerStartHost;
             //NetworkManager.Singleton.SceneManager.LoadScene("HeadScene", LoadSceneMode.Single);
         }
@@ -231,12 +238,8 @@ public class MyNetwork : MonoBehaviour
         ChatSystem.SystemSendMessage(message, 10);
     }
 
-
-
     async Task<Lobby> CreateLobbyWithHeartbeatAsync()
     {
-        
-
         string lobbyName = host_nameInput.text;
         int maxPlayers = 4;
         CreateLobbyOptions options = new CreateLobbyOptions();

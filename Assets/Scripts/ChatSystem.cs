@@ -12,9 +12,25 @@ public class ChatSystem : NetworkBehaviour
     void Start()
     {
         instance = this;
-        //DontDestroyOnLoad(gameObject);
+        
+
+        if (!NetworkManager.IsConnectedClient && !IsServer)
+        {
+            OnJoinServerRPC(MyNetwork.player_name);
+        }
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    public void OnJoinServerRPC(string name)
+    {
+        OnJoinClientRPC(name);
+    }
+
+    [ClientRpc()]
+    public void OnJoinClientRPC(string name)
+    {
+        MyNetwork.allPlayerNames.Add(name);
+    }
 
     public void PlayerSendChatMessage()
     {

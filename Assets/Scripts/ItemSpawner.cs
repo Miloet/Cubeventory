@@ -20,7 +20,7 @@ public class ItemSpawner : MonoBehaviour
         Toggle[] all = GetComponentsInChildren<Toggle>();
         for (int i = 0; i < all.Length; i++)
         {
-            formatted[i % maxItemSize, i / maxItemSize] = all[i];
+            formatted[i / maxItemSize, i % maxItemSize] = all[i];
         }
         toggles = formatted;
     }
@@ -113,19 +113,26 @@ public class ItemSpawner : MonoBehaviour
     }
     public void SetItem(GameObject g)
     {
-        uint width;
-        uint height;
+        var item = g.GetComponent<Item>();
+        uint width = (uint)item.weight.GetLength(0);
+        uint height = (uint)item.weight.GetLength(1);
+
+        bool anyActive = false;
 
         bool[,] weight = new bool[maxItemSize, maxItemSize];
 
         for (int i = 0; i < maxItemSize * maxItemSize; i++)
         {
             weight[i % maxItemSize, i / maxItemSize] = toggles[i % maxItemSize, i / maxItemSize].isOn;
+            if (toggles[i % maxItemSize, i / maxItemSize].isOn) anyActive = true;
         }
+        
+        bool[] realWeight = Flatten2D(item.weight);
 
-        var item = g.GetComponent<Item>();
+        if(anyActive)
+            realWeight = GetRealWeight(weight, out width, out height);
         Color c = colorPicker.color;
-        item.SendItemServerRPC(nameField.text, descriptionField.text, linkField.text, GetRealWeight(weight, out width, out height), width, height, c);
+        item.SendItemServerRPC(nameField.text, descriptionField.text, linkField.text, realWeight, width, height, c);
     }
 
     public bool[] GetRealWeight(bool[,] weight, out uint width, out uint height)
@@ -191,7 +198,7 @@ public class ItemSpawner : MonoBehaviour
         }
         return Flatten2D(shorten);
     }
-    public bool[] Flatten2D(bool[,] weight)
+    public static bool[] Flatten2D(bool[,] weight)
     {
         bool[] flat = new bool[weight.Length];
         int i = 0;
@@ -205,14 +212,24 @@ public class ItemSpawner : MonoBehaviour
 
         return flat;
     }
+    public static bool[,] Unflatten2D(bool[] weight, int width)
+    {
+        int height = weight.Length / width;
+        bool[,] cells = new bool[width, weight.Length / width];
+        for (int i = 0; i < weight.Length; i++)
+        {
+            cells[i / height, i % height] = weight[i];
+        }
+        return cells;
+    }
 
 
-    
 
 
 
 
-    static bool[,] RotateMatrixCounterClockwise(bool[,] oldMatrix)
+
+        static bool[,] RotateMatrixCounterClockwise(bool[,] oldMatrix)
     {
         bool[,] newMatrix = new bool[oldMatrix.GetLength(1), oldMatrix.GetLength(0)];
         int newColumn, newRow = 0;
