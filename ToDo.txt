@@ -1,7 +1,10 @@
-Add that when player picks up item its kept at the same offset from their cursor as when they picked it up
+
 Add a quick button for deleting on server
+add keybinds to buttons?
+be able to choose str score when joining :3
 
 
+!Add that when player picks up item its kept at the same offset from their cursor as when they picked it up!
 !save inventory as files
 !load inventory from files
 	!asign inventory to player

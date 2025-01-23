@@ -45,6 +45,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
 
     public static HashSet<Item> allInventoryItems = new HashSet<Item>();
     public static Item lastPickedUp;
+    public static Vector2 itemOffset;
 
     private void Start()
     {
@@ -239,7 +240,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     public void RequestItemFromClientRPC()
     {
         if (IsServer)
-            SendItemServerRPC(name, description, link, Convert(weight), (uint)weight.GetLength(0), (uint)weight.GetLength(1), color);
+            SendItemServerRPC(name, description, link, ItemSpawner.Flatten2D(weight), (uint)weight.GetLength(0), (uint)weight.GetLength(1), color, transform.parent != MouseBehaviour.instance.hand);
     }
 
     #endregion
@@ -251,6 +252,9 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         NetworkObject.TrySetParent(MouseBehaviour.instance.canvas.transform, true);
         isDragging = true;
         lastPickedUp = this;
+        itemOffset = (Vector2)transform.position - eventData.position;
+
+
         ItemDescription.instance.OnItemChange(lastPickedUp);
         inventoryPosition = new Vector2Int(-1, -1);
         PlaceServerRPC(false);
@@ -260,7 +264,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     {
         if (!IsOwner) return;
 
-        position = eventData.position;
+        position = eventData.position + itemOffset;
     }
     public void OnEndDrag(PointerEventData eventData)
     {
@@ -321,7 +325,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
             Mathf.RoundToInt(diff.x / inventoryCellSize),
             Mathf.RoundToInt(diff.y / inventoryCellSize));
 
-        pos.Clamp(new Vector2Int(0, 0), new Vector2Int(15 - weight.GetLength(1), rows.childCount - weight.GetLength(0)));
+        pos.Clamp(new Vector2Int(0, 0), new Vector2Int(15 - weight.GetLength(0), rows.childCount - weight.GetLength(1)));
 
         inventoryPosition = pos;
 
@@ -508,17 +512,6 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
             weight[i] = true;
         }
         return weight;
-    }
-
-    public static bool[] Convert(bool[,] data)
-    {
-        int width = data.GetLength(0);
-        bool[] result = new bool[data.Length];
-        for (int i = 0; i < data.Length; i++)
-        {
-            result[i] = data[i%width, i/width];
-        }
-        return result;
     }
 
 }

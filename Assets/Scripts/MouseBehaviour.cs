@@ -19,10 +19,10 @@ public class MouseBehaviour : NetworkBehaviour
         canvas = GameObject.Find("Canvas").GetComponent<Canvas>();
         if (IsServer)
         {
-            var can = FindFirstObjectByType<Canvas>();
-            if (can != null)
+            Transform mice = GameObject.Find("Mice").transform;
+            if (mice != null)
             {
-                NetworkObject.TrySetParent(can.transform.Find("Mice"), true);
+                NetworkObject.TrySetParent(mice, true);
             }
             else
             {

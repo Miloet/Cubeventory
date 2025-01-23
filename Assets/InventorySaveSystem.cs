@@ -25,23 +25,15 @@ public class InventorySaveSystem : MonoBehaviour
     
     private void Start()
     {
-        UpdateReadFiles();
+        UpdatePlayerNames();
+
     }
 
-    private void UpdateReadFiles()
+    public void UpdatePlayerNames()
     {
         playerDropdown.ClearOptions();
         playerDropdown.AddOptions(CreateOptions(MyNetwork.allPlayerNames.ToArray()));
         fullPath = Path.Combine(documentsFolder, rootFolderName);
-
-        
-        /*
-        filePathes = Directory.GetFiles(fullPath);
-        fileNames = filePathes.Select(f => Path.GetFileName(f)).ToArray();
-
-        fileDropdown.ClearOptions();
-        fileDropdown.AddOptions(CreateOptions(fileNames));
-        */
     }
 
     private List<TMP_Dropdown.OptionData> CreateOptions(string[] array)
@@ -88,6 +80,13 @@ public class InventorySaveSystem : MonoBehaviour
 
         var path = StandaloneFileBrowser.SaveFilePanel("Save Inventory", fullPath, "inv", "cubeventory");
 
+        if (path == null)
+        {
+            ChatSystem.SystemSendMessage("<color=red>you fucko-! YOU DIDNT SAVE THE FILE!!!! >:[");
+
+            return;
+        }
+
         string contents = JsonUtility.ToJson(invData);
 
         File.WriteAllText(path, contents);
@@ -109,6 +108,13 @@ public class InventorySaveSystem : MonoBehaviour
 
         var path = StandaloneFileBrowser.OpenFilePanel("Load Inventory", fullPath, "cubeventory", false);
 
+        if(path == null)
+        {
+            ChatSystem.SystemSendMessage("<color=red>you fucko-! YOU DIDNT SELECT A FILE!!!! >:[");
+
+            return;
+        }
+
         string file = File.ReadAllText(path.FirstOrDefault());
         InventoryData items = JsonUtility.FromJson<InventoryData>(file);
         inv.SendInvServerRPC(items.strength, inv.owner);
@@ -119,8 +125,7 @@ public class InventorySaveSystem : MonoBehaviour
             var item = g.GetComponent<Item>();
             var net = g.GetComponent<Unity.Netcode.NetworkObject>();
 
-            i.SetItemData(item, inv);
-            net.ChangeOwnership(playerID);
+            i.SetItemData(item, inv, playerID);
         }
     }
 }
@@ -163,11 +168,12 @@ public struct ItemData
         this.color = color;
         this.inventoryPosition = inventoryPosition;
     }
-    public async Awaitable SetItemData(Item item, Inventory inv)
+    public async Awaitable SetItemData(Item item, Inventory inv, ulong owner)
     {
         SetItemData(item);
         await Awaitable.NextFrameAsync();
         item.SetPositionInInventory(inventoryPosition, inv);
+        item.RequestOwnershipChangeServerRPC(owner, item.transform.position);
     }
     public void SetItemData(Item item)
     {

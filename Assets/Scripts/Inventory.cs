@@ -51,7 +51,7 @@ public class Inventory : NetworkBehaviour
     }
 
 
-    [ServerRpc(RequireOwnership = true)]
+    [ServerRpc(RequireOwnership = false)]
     public void SendInvServerRPC(int str, string name)
     {
         SendInvClientRPC(str, name);

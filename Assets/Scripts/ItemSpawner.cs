@@ -55,39 +55,17 @@ public class ItemSpawner : MonoBehaviour
 
     public void RotateItem(bool forward)
     {
-        return;
         if (Item.lastPickedUp != null)
         {
             var item = Item.lastPickedUp;
-
             bool[,] weight = item.weight;
 
-            //FOR WHATEVER FUCK-ASS REASON THIS FUNCTION HAS TO BE CALLED 5 TIMES IN A ROW TO PROPPELRY ROTATE IT??????
-            //whatever, just dont question it
-            //nevermind, it just doenst work :P
-            for(int i = 0; i < 5; i++)
-            {
+            if (forward)
+                weight = RotateMatrixClockwise(weight);
+            else
                 weight = RotateMatrixCounterClockwise(weight);
 
-                /*if (!(i + 1 < 5)) break;
-
-                int width = weight.GetLength(0);
-                int height = weight.GetLength(1);
-
-                bool[] flatWeight = Flatten2D(weight);
-
-                bool[,] cells = new bool[width, height];
-                for (int j = 0; j < width * height; j++)
-                {
-                    cells[j % width, j / width] = flatWeight[j];
-                }
-                weight = cells;*/
-            }
-            //weight = RotateMatrixCounterClockwise(weight);
-
-
-
-            item.SendItemServerRPC(item.name, item.description, item.link, GetRealWeight(weight), 
+            item.SendItemServerRPC(item.name, item.description, item.link, Flatten2D(weight), 
                 (uint)weight.GetLength(0), (uint)weight.GetLength(1), item.color);
         }
     }
@@ -98,6 +76,25 @@ public class ItemSpawner : MonoBehaviour
         {
             var obj = Item.lastPickedUp.GetComponent<NetworkObject>();
             obj.Despawn(true);
+        }
+    }
+
+    public void DeleteItem(Item item)
+    {
+        if (item != null)
+        {
+            var obj = item.GetComponent<NetworkObject>();
+            obj.Despawn(true);
+        }
+    }
+
+    public void DeleteAllItems()
+    {
+        Item[] allItems = FindObjectsByType<Item>(FindObjectsSortMode.None);
+
+        foreach(Item i in allItems)
+        {
+            DeleteItem(i);
         }
     }
 
@@ -224,12 +221,27 @@ public class ItemSpawner : MonoBehaviour
     }
 
 
+    static bool[,] RotateMatrixClockwise(bool[,] oldMatrix)
+    {
+        bool[,] newMatrix = new bool[oldMatrix.GetLength(1), oldMatrix.GetLength(0)];
+        int newColumn, newRow;
 
+        newColumn = 0;
+        for (int oldRow = oldMatrix.GetLength(0) - 1; oldRow >= 0; oldRow--)
+        {
+            newRow = 0;
+            for (int oldColumn = 0; oldColumn < oldMatrix.GetLength(1); oldColumn++)
+            {
+                newMatrix[newRow, newColumn] = oldMatrix[oldRow, oldColumn];
+                newRow++;
+            }
+            newColumn++;
+        }
 
+        return newMatrix;
+    }
 
-
-
-        static bool[,] RotateMatrixCounterClockwise(bool[,] oldMatrix)
+    static bool[,] RotateMatrixCounterClockwise(bool[,] oldMatrix)
     {
         bool[,] newMatrix = new bool[oldMatrix.GetLength(1), oldMatrix.GetLength(0)];
         int newColumn, newRow = 0;

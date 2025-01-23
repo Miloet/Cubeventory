@@ -14,7 +14,7 @@ public class ChatSystem : NetworkBehaviour
         instance = this;
         
 
-        if (!NetworkManager.IsConnectedClient && !IsServer)
+        if (NetworkManager.IsConnectedClient && !IsServer)
         {
             OnJoinServerRPC(MyNetwork.player_name);
         }
@@ -26,10 +26,14 @@ public class ChatSystem : NetworkBehaviour
         OnJoinClientRPC(name);
     }
 
-    [ClientRpc()]
+    [ClientRpc]
     public void OnJoinClientRPC(string name)
     {
         MyNetwork.allPlayerNames.Add(name);
+        if(IsServer)
+        {
+            FindFirstObjectByType<InventorySaveSystem>().UpdatePlayerNames();
+        }
     }
 
     public void PlayerSendChatMessage()
