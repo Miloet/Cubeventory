@@ -1,8 +1,10 @@
 Add that when player picks up item its kept at the same offset from their cursor as when they picked it up
+Add a quick button for deleting on server
 
-save inventory as files
-load inventory from files
-	asign inventory to player
+
+!save inventory as files
+!load inventory from files
+	!asign inventory to player
 
 MINOR BUG FIXES and ADDITIONS: 
 fix the ui clickability in join menu
