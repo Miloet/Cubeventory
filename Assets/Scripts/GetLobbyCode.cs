@@ -8,7 +8,7 @@ public class GetLobbyCode : MonoBehaviour
     private void Awake()
     {
         var network = FindFirstObjectByType<MyNetwork>();
-        lobbyCode = network.lobby.LobbyCode;
+        lobbyCode = network.LobbyCode;
         GetComponent<TextMeshProUGUI>().text = "Lobby Code: " + lobbyCode;
     }
 

@@ -13,6 +13,7 @@ public class MouseBehaviour : NetworkBehaviour
     public Transform hand;
 
     public Color playerColor;
+    public new TMPro.TextMeshProUGUI name;
 
     private void Start()
     {
@@ -33,21 +34,36 @@ public class MouseBehaviour : NetworkBehaviour
         {
             instance = this;
             PlayerID = NetworkObject.OwnerClientId;
+
             hand = canvas.transform.Find("Hand");
 
 
-            GetComponent<Image>().enabled = false;
-            
-            if(IsServer && MyNetwork.host_isPlayer) RequestInventoryServerRPC(NetworkObject.OwnerClientId);
+            GetComponentInChildren<Image>().enabled = false;
+            GetComponentInChildren<TMPro.TextMeshProUGUI>().enabled = false;
+
+            if (IsServer && MyNetwork.host_isPlayer) RequestInventoryServerRPC(NetworkObject.OwnerClientId);
             if(!IsServer) RequestInventoryServerRPC(NetworkObject.OwnerClientId);
 
             playerName = MyNetwork.player_name;
             playerColor = MyNetwork.player_color;
 
+            SendNameServerRPC(playerName);
             //playerColor = new Color(Random.Range(0f,1f), Random.Range(0f, 1f), Random.Range(0f, 1f),1);
         }
         
     }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void SendNameServerRPC(string name)
+    {
+        SendNameClientRPC(name);
+    }
+    [ClientRpc(RequireOwnership = false)]
+    public void SendNameClientRPC(string name)
+    {
+        this.name.text = name;
+    }
+
 
     [ServerRpc(RequireOwnership = false)]
     public void RequestInventoryServerRPC(ulong uID)

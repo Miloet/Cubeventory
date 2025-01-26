@@ -69,7 +69,18 @@ public class ItemSpawner : MonoBehaviour
                 (uint)weight.GetLength(0), (uint)weight.GetLength(1), item.color);
         }
     }
+    public void DuplicateItem()
+    {
+        if (Item.lastPickedUp == null) return;
 
+        var original = Item.lastPickedUp;
+        
+        var g = CreateItem();
+
+        var item = g.GetComponent<Item>();
+        item.SendItemServerRPC(original.name, original.description, original.link, Flatten2D(original.weight),
+                (uint)original.weight.GetLength(0), (uint)original.weight.GetLength(1), original.color);
+    }
     public void DeleteItem()
     {
         if (Item.lastPickedUp != null)

@@ -3,10 +3,10 @@ using UnityEngine.UI;
 using System;
 using System.Linq;
 using System.IO;
-using System.Collections;
 using System.Collections.Generic;
 using SFB;
 using TMPro;
+using Unity.Netcode;
 
 
 public class InventorySaveSystem : MonoBehaviour
@@ -14,21 +14,20 @@ public class InventorySaveSystem : MonoBehaviour
     public ItemSpawner itemSpawner;
 
     public TMP_Dropdown playerDropdown;
-    private string[] fileNames;
-    private string[] filePathes;
 
     private const string rootFolderName = "Cubeventory";
     private string documentsFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
     private string fullPath;
 
+    public Toggle hasBagOfHolding;
+    public TMP_InputField strScoreInput;
+
     //private ExtensionFilter fileTypes = new ExtensionFilter("Cubeventory File", "cubeventory");
-    
+
     private void Start()
     {
         UpdatePlayerNames();
-
     }
-
     public void UpdatePlayerNames()
     {
         playerDropdown.ClearOptions();
@@ -70,7 +69,7 @@ public class InventorySaveSystem : MonoBehaviour
             allItemData.Add(data);
         }
 
-        InventoryData invData = new InventoryData(inv.strScore, allItemData.ToArray());
+        InventoryData invData = new InventoryData(inv.strScore, inv.hasBagOfHolding, allItemData.ToArray());
 
 
         if (!Directory.Exists(fullPath))
@@ -91,9 +90,6 @@ public class InventorySaveSystem : MonoBehaviour
 
         File.WriteAllText(path, contents);
     }
-
-
-
     public void LoadInventory()
     {
         int playerIndex = playerDropdown.value;
@@ -117,7 +113,7 @@ public class InventorySaveSystem : MonoBehaviour
 
         string file = File.ReadAllText(path.FirstOrDefault());
         InventoryData items = JsonUtility.FromJson<InventoryData>(file);
-        inv.SendInvServerRPC(items.strength, inv.owner);
+        inv.SendInvServerRPC(items.strength, items.bagOfHolding, inv.owner);
         foreach (ItemData i in items.itemData)
         {
             var g = itemSpawner.CreateItem();
@@ -125,20 +121,38 @@ public class InventorySaveSystem : MonoBehaviour
             var item = g.GetComponent<Item>();
             var net = g.GetComponent<Unity.Netcode.NetworkObject>();
 
-            i.SetItemData(item, inv, playerID);
+            _ = i.SetItemData(item, inv, playerID);
+            Item.allInventoryItems.Add(item);
         }
     }
+
+    public void UpdateInventorySize()
+    {
+        int str;
+        if (!int.TryParse(strScoreInput.text, out str)) return;
+
+        bool bagOfHolding = hasBagOfHolding.isOn;
+        int playerIndex = playerDropdown.value;
+
+        Inventory inv = Inventory.inventories.ToArray()[playerIndex];
+
+        inv.SendInvServerRPC(str, bagOfHolding, inv.owner);
+    }
+
+
 }
 
 [Serializable]
 public struct InventoryData
 {
     public int strength;
+    public bool bagOfHolding;
     public ItemData[] itemData;
 
-    public InventoryData(int strength, ItemData[] itemData)
+    public InventoryData(int strength, bool bagOfHolding, ItemData[] itemData)
     {
         this.strength = strength;
+        this.bagOfHolding = bagOfHolding;
         this.itemData = itemData;
     }
 }

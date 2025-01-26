@@ -10,9 +10,4 @@ be able to choose str score when joining :3
 	!asign inventory to player
 
 MINOR BUG FIXES and ADDITIONS: 
-fix the ui clickability in join menu
 fix the item description having the background be too transparent
-
-small bugs for the clients:
-mouse not visible on eachothers screens
-rotation and scale sometimes get stuck for the other person

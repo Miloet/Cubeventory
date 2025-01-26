@@ -12,12 +12,14 @@ public class ChatSystem : NetworkBehaviour
     void Start()
     {
         instance = this;
-        
 
-        if (NetworkManager.IsConnectedClient && !IsServer)
+
+        try
         {
             OnJoinServerRPC(MyNetwork.player_name);
         }
+        catch
+        { }
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -30,6 +32,7 @@ public class ChatSystem : NetworkBehaviour
     public void OnJoinClientRPC(string name)
     {
         MyNetwork.allPlayerNames.Add(name);
+  
         if(IsServer)
         {
             FindFirstObjectByType<InventorySaveSystem>().UpdatePlayerNames();

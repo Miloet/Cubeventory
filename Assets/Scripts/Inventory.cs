@@ -6,7 +6,9 @@ using TMPro;
 public class Inventory : NetworkBehaviour
 {
     public int strScore;
+    public bool hasBagOfHolding;
     public static GameObject row;
+    public static GameObject bagOfHoldingRow;
 
     public static HashSet<Inventory> inventories = new HashSet<Inventory>();
     [System.NonSerialized] public RectTransform rectTransform;
@@ -16,11 +18,14 @@ public class Inventory : NetworkBehaviour
     public TextMeshProUGUI ownerName;
 
 
+    public const int bagOfHoldingSize = 4;
+
     private void Start()
     {
         if (row == null)
         {
             row = Resources.Load<GameObject>("InventoryRow");
+            bagOfHoldingRow = Resources.Load<GameObject>("BagOfHoldingRow");
         }
         
         rectTransform = GetComponent<RectTransform>();
@@ -29,7 +34,7 @@ public class Inventory : NetworkBehaviour
         if (!IsOwner)
             RequestInvServerRPC();
         else
-            SendInvServerRPC(strScore = Random.Range(10, 20), MyNetwork.player_name);
+            SendInvServerRPC(strScore = Random.Range(10, 20), false, MyNetwork.player_name);
     }
 
     public override void OnDestroy()
@@ -47,49 +52,50 @@ public class Inventory : NetworkBehaviour
     public void RequestInvClientRPC()
     {
         if(IsOwner)
-            SendInvServerRPC(strScore, MyNetwork.player_name);
+            SendInvServerRPC(strScore, hasBagOfHolding, MyNetwork.player_name);
     }
 
 
     [ServerRpc(RequireOwnership = false)]
-    public void SendInvServerRPC(int str, string name)
+    public void SendInvServerRPC(int str, bool hasBagOfHolding, string name)
     {
-        SendInvClientRPC(str, name);
+        SendInvClientRPC(str, hasBagOfHolding, name);
     }
     [ClientRpc]
-    public void SendInvClientRPC(int str, string name)
+    public void SendInvClientRPC(int str, bool hasBagOfHolding, string name)
     {
         owner = name;
         ownerName.text = $"{owner}'s Inventory";
-        UpdateInventorySpace(str);
+        UpdateInventorySpace(str, hasBagOfHolding);
     }
 
-    public void UpdateInventorySpace(int str)
+    public void UpdateInventorySpace(int str, bool hasBagOfHolding)
     {
         strScore = Mathf.Clamp(str, 1, 30);
 
-        if (inventoryRows.childCount != strScore)
+
+        if (inventoryRows.childCount != strScore || this.hasBagOfHolding != hasBagOfHolding)
         {
-            int original = inventoryRows.childCount;
-            if (inventoryRows.childCount > strScore)
+            foreach (Transform child in inventoryRows)
             {
-                for (int i = 0; i < original - strScore; i++)
-                {
-                    Destroy(inventoryRows.GetChild(i).gameObject);
-                }
+                Destroy(child.gameObject);
             }
-            else
+                
+            for (int i = 0; i < strScore; i++)
             {
-                for (int i = 0; i < strScore - original; i++)
-                {
-                    Instantiate(row, inventoryRows);
-                }
+                Instantiate(row, inventoryRows);
             }
+            if(hasBagOfHolding)
+                for (int i = 0; i < bagOfHoldingSize; i++)
+                {
+                    Instantiate(bagOfHoldingRow, inventoryRows);
+                }
+            
         }
 
         RectTransform singleRow = ((RectTransform)row.transform);
         size = singleRow.sizeDelta * singleRow.localScale;
-
+        this.hasBagOfHolding = hasBagOfHolding;
     }
 
     private Vector2 size;

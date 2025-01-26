@@ -1,22 +1,28 @@
 using TMPro;
-using Unity.Netcode;
-using Unity.Services.Lobbies.Models;
-using Unity.Services.Lobbies;
+
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.Services.Core;
 using System;
-using Unity.Services.Authentication;
 using System.Linq;
+using System.Net;
+using Unity.Netcode;
+
+using Unity.Services.Lobbies;
+using Unity.Services.Lobbies.Models;
+using Unity.Services.Authentication;
+using Unity.Netcode.Transports;
+using Unity.Netcode.Transports.UTP;
+using Unity.Networking.Transport.Relay;
+using Unity.Services.Relay;
+using Unity.Services.Relay.Models;
+using Unity.Services.Core;
 
 public class MyNetwork : MonoBehaviour
 {
-    public Lobby lobby;
-
     public Toggle hostIsPlayerToggle;
 
     public static bool host_isPlayer;
@@ -27,7 +33,7 @@ public class MyNetwork : MonoBehaviour
     public FlexibleColorPicker player_colorInput;
     public TMP_InputField player_joinCode;
 
-    public TMP_InputField host_nameInput;
+    //public TMP_InputField host_nameInput;
     //public TMP_InputField host_PasswordInput;
 
     public Animator skeletonAnimator;
@@ -36,20 +42,47 @@ public class MyNetwork : MonoBehaviour
     public Button hostButton;
     public Button playerButton;
 
+    //public static Dictionary<ulong, string> IdToName = new Dictionary<ulong, string>();
     public static HashSet<string> allPlayerNames = new HashSet<string>();
+
+    bool doOnce = false;
+    public RelayHostData relayHostData;
+    public RelayJoinData relayJoinData;
+    private string lobbyId;
+    public string LobbyCode;
 
     async void Awake()
     {
+        if (doOnce) return;
+
+        doOnce = true;
+
         try
         {
-            host_nameInput.text = RandomString(10);
+            Application.targetFrameRate = 60;
+
+            UnityTransport transport = GetComponent<UnityTransport>();
+
+            transport.SetConnectionData(GetLocalIPv4(), (ushort)8888);
+
+            
+            //host_nameInput.text = RandomString(10);
             await Authenticate(RandomString(20));
             await SignIn();
         }
         catch (Exception e)
         {
             Debug.LogException(e);
+            WrongInformation(e.Message);
         }
+    }
+
+    public string GetLocalIPv4()
+    {
+        return Dns.GetHostEntry(Dns.GetHostName())
+        .AddressList.First(
+        f => f.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+        .ToString();
     }
 
     public static string RandomString(int length)
@@ -149,19 +182,45 @@ public class MyNetwork : MonoBehaviour
             return;
         }
 
+        JoinAllocation allocation = null;
+
         try
         {
-            lobby = await LobbyService.Instance.JoinLobbyByCodeAsync(player_joinCode.text);
-            NetworkManager.Singleton.StartClient();
+            allocation = await RelayService.Instance.JoinAllocationAsync(player_joinCode.text);
+            LobbyCode = player_joinCode.text.ToUpper();
         }
-        catch (LobbyServiceException e)
+        catch (Exception e)
         {
             Debug.Log(e);
-            WrongInformation("ERROR: failed to join lobby");
+            ChatSystem.SystemSendMessage(e.Message);
         }
+
+        relayJoinData = new RelayJoinData
+        {
+            Key = allocation.Key,
+            Port = (ushort)allocation.RelayServer.Port,
+            AllocationID = allocation.AllocationId,
+            AllocationIDBytes = allocation.AllocationIdBytes,
+            ConnectionData = allocation.ConnectionData,
+            HostConnectionData = allocation.HostConnectionData,
+            IPv4Address = allocation.RelayServer.IpV4
+        };
+
+        UnityTransport unityTransport = GetComponent<UnityTransport>();
+
+        unityTransport.SetRelayServerData(relayJoinData.IPv4Address,
+            relayJoinData.Port,
+            relayJoinData.AllocationIDBytes,
+            relayJoinData.Key,
+            relayJoinData.ConnectionData,
+            relayJoinData.HostConnectionData);
+
+        
+        NetworkManager.Singleton.StartClient();
     }
     public async Awaitable StartHost()
     {
+        
         host_isPlayer = hostIsPlayerToggle.isOn;
 
         if(!Host_CheckInfo())
@@ -169,24 +228,82 @@ public class MyNetwork : MonoBehaviour
             return;
         }
 
+
+        Allocation allocation = null;
+
         try
         {
-            lobby = await CreateLobbyWithHeartbeatAsync();
-            await SceneManager.LoadSceneAsync("HeadScene");
+            //Ask Unity Services to allocate a Relay server
+            allocation = await RelayService.Instance.CreateAllocationAsync(5);
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e);
+            ChatSystem.SystemSendMessage(e.Message);
+        }
 
-            NetworkManager.Singleton.StartHost();
+        //Populate the hosting data
+        relayHostData = new RelayHostData
+        {
+            Key = allocation.Key,
+            Port = (ushort)allocation.RelayServer.Port,
+            AllocationID = allocation.AllocationId,
+            AllocationIDBytes = allocation.AllocationIdBytes,
+            ConnectionData = allocation.ConnectionData,
+            IPv4Address = allocation.RelayServer.IpV4
+        };
 
-            if (host_isPlayer)
+        try
+        {
+            //Retrieve the Relay join code for our clients to join our party
+            relayHostData.JoinCode = await RelayService.Instance.GetJoinCodeAsync(relayHostData.AllocationID);
+            LobbyCode = relayHostData.JoinCode;
+            Debug.Log(relayHostData.JoinCode);
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e);
+            ChatSystem.SystemSendMessage(e.Message);
+        }
+
+        //Retrieve the Unity transport used by the NetworkManager
+        UnityTransport transport = NetworkManager.Singleton.gameObject.GetComponent<UnityTransport>();
+
+        transport.SetRelayServerData(relayHostData.IPv4Address,
+            relayHostData.Port,
+            relayHostData.AllocationIDBytes,
+            relayHostData.Key,
+            relayHostData.ConnectionData);
+
+        /*
+        {
+            var createLobbyOptions = new CreateLobbyOptions();
+            createLobbyOptions.IsPrivate = false;
+            createLobbyOptions.Data = new Dictionary<string, DataObject>()
             {
-                allPlayerNames.Add(player_name);
-            }
-            //NetworkManager.Singleton.SceneManager.OnLoadComplete += NetworkManagerStartHost;
-            //NetworkManager.Singleton.SceneManager.LoadScene("HeadScene", LoadSceneMode.Single);
+                {
+                    "JoinCode", new DataObject(
+                        visibility: DataObject.VisibilityOptions.Member,
+                        value: relayHostData.JoinCode
+                    )
+                }
+            };
+            lobby = await CreateLobbyWithHeartbeatAsync(createLobbyOptions);
+            lobbyId = lobby.Id;
         }
         catch (LobbyServiceException e)
         {
             Debug.Log(e);
-            WrongInformation("ERROR: lobby failed to start :(");
+            ChatSystem.SystemSendMessage(e.Message);
+        }*/
+
+        await SceneManager.LoadSceneAsync("HeadScene");
+
+        NetworkManager.Singleton.StartHost();
+
+        if (host_isPlayer)
+        {
+            allPlayerNames.Add(player_name);
         }
     }
 
@@ -218,11 +335,11 @@ public class MyNetwork : MonoBehaviour
             return false;
         }
 
-        if (host_nameInput.text == "") 
+        /*if (host_nameInput.text == "") 
         {
             WrongInformation("ERROR: No lobby name");
             return false;
-        }
+        }*/
 
         return true;
     }
@@ -238,40 +355,28 @@ public class MyNetwork : MonoBehaviour
         ChatSystem.SystemSendMessage(message, 10);
     }
 
-    async Task<Lobby> CreateLobbyWithHeartbeatAsync()
+
+
+    public struct RelayHostData
     {
-        string lobbyName = host_nameInput.text;
-        int maxPlayers = 4;
-        CreateLobbyOptions options = new CreateLobbyOptions();
-        options.IsPrivate = true;
-
-        Lobby lobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, options);
-
-        // Heartbeat the lobby every 15 seconds.
-        StartCoroutine(HeartbeatLobbyCoroutine(lobby.Id, 15));
-
-        Debug.Log(lobby.LobbyCode);
-
-        return lobby;
+        public string JoinCode;
+        public string IPv4Address;
+        public ushort Port;
+        public Guid AllocationID;
+        public byte[] AllocationIDBytes;
+        public byte[] ConnectionData;
+        public byte[] Key;
     }
 
-    IEnumerator HeartbeatLobbyCoroutine(string lobbyId, float waitTimeSeconds)
+    public struct RelayJoinData
     {
-        var delay = new WaitForSecondsRealtime(waitTimeSeconds);
-
-        yield return delay;
-
-        while (true)
-        {
-            LobbyService.Instance.SendHeartbeatPingAsync(lobbyId);
-            yield return delay;
-        }
+        public string JoinCode;
+        public string IPv4Address;
+        public ushort Port;
+        public Guid AllocationID;
+        public byte[] AllocationIDBytes;
+        public byte[] ConnectionData;
+        public byte[] HostConnectionData;
+        public byte[] Key;
     }
-
-
-    /*private void NetworkManagerStartHost(ulong clientId, string sceneName, LoadSceneMode loadSceneMode)
-    {
-        NetworkManager.Singleton.StartHost();
-        NetworkManager.Singleton.SceneManager.OnLoadComplete -= NetworkManagerStartHost;
-    }*/
 }

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler
 {
-    public string name;
+    public new string name;
     public string description;
     public Color color;
     public string link;
@@ -84,7 +84,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     }
 
 
-    [ServerRpc(RequireOwnership = true)]
+    [ServerRpc(RequireOwnership = false)]
     public void UpdateColorServerRPC(bool obstructed)
     {
         UpdateColorClientRPC(obstructed);
@@ -116,7 +116,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
 
     public void DefineItem(string name,string description, string link, bool[] weight, uint width, uint height, Color color, bool inPlace = false)
     {
-        if (IsOwner)
+        if (CanFuckWith())
         {
             if (inPlace)
                 NetworkObject.TrySetParent(MouseBehaviour.instance.canvas.transform, true);
@@ -143,7 +143,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
 
         UpdateItem();
 
-        if (IsOwner)
+        if (CanFuckWith())
         {
             outlineColor.Value = MouseBehaviour.instance.playerColor;
         }
@@ -248,13 +248,19 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     #region Drag
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if(!IsOwner) return;
+        if(!CanFuckWith()) return;
+
+        if(!IsOwner)
+        {
+            NetworkObject.ChangeOwnership(MouseBehaviour.instance.PlayerID);
+        }
+
         NetworkObject.TrySetParent(MouseBehaviour.instance.canvas.transform, true);
         isDragging = true;
         lastPickedUp = this;
         itemOffset = (Vector2)transform.position - eventData.position;
 
-
+        visual.transform.SetAsLastSibling();
         ItemDescription.instance.OnItemChange(lastPickedUp);
         inventoryPosition = new Vector2Int(-1, -1);
         PlaceServerRPC(false);
@@ -262,13 +268,13 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     }
     public void OnDrag(PointerEventData eventData)
     {
-        if (!IsOwner) return;
+        if (!CanFuckWith()) return;
 
         position = eventData.position + itemOffset;
     }
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (!IsOwner) return;
+        if (!CanFuckWith()) return;
 
         animator.SetBool("Hover", false);
         isDragging = false;
@@ -299,7 +305,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
             CheckForOverlap();
             PlaceServerRPC(true);
 
-            if (ownerId != MouseBehaviour.instance.PlayerID)
+            if (ownerId != OwnerClientId)
             {
                 lastPickedUp = null;
                 RequestOwnershipChangeServerRPC(ownerId, transform.position);
@@ -374,7 +380,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         }
     }
 
-    [ServerRpc(RequireOwnership = true)]
+    [ServerRpc(RequireOwnership = false)]
     public void RequestOwnershipChangeServerRPC(ulong newOwner, Vector3 position)
     {
         RequestOwnershipChangeClientRPC(newOwner, position);
@@ -406,7 +412,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
 
     public void OnPointerEnter(PointerEventData pointerEventData)
     {
-        if (IsOwner)
+        if (CanFuckWith())
         {
             if (!isDragging) animator.SetBool("Hover", true);
         }
@@ -414,7 +420,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     }
     public void OnPointerExit(PointerEventData pointerEventData)
     {
-        if (IsOwner && !isDragging)
+        if (CanFuckWith() && !isDragging)
         {
             animator.SetBool("Hover", false);
         }
@@ -431,9 +437,13 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
             transform.position = position;
         }
 
-        float distance = Vector2.Distance(visual.position, transform.position) * positionLerp;
-        visual.position = Vector3.MoveTowards(visual.position, transform.position, (distance + flatSpeed) * Time.deltaTime);
+        if (visual.position != transform.position)
+        {
+            float distance = Vector2.Distance(visual.position, transform.position) * positionLerp;
+            visual.position = Vector3.MoveTowards(visual.position, transform.position, (distance + flatSpeed) * Time.deltaTime);
+        }
 
+        
         if (IsOwner)
         {
             Vector3 movement = (visual.position - transform.position);
@@ -514,4 +524,9 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         return weight;
     }
 
+
+    public bool CanFuckWith()
+    {
+        return IsServer || IsOwner;
+    }
 }
