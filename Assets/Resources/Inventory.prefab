@@ -61,7 +61,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 1824447849
+  GlobalObjectIdHash: 2404045038
   InScenePlacedSourceGlobalObjectIdHash: 2404045038
   DeferredDespawnTick: 0
   Ownership: 1
@@ -88,6 +88,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   strScore: 15
+  hasBagOfHolding: 0
   inventoryRows: {fileID: 9100483170816629422}
   ownerName: {fileID: 7723663824512350753}
 --- !u!114 &2774869269170014503

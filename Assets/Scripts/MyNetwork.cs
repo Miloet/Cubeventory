@@ -59,7 +59,6 @@ public class MyNetwork : MonoBehaviour
 
         try
         {
-            Application.targetFrameRate = 60;
 
             UnityTransport transport = GetComponent<UnityTransport>();
 
@@ -75,6 +74,14 @@ public class MyNetwork : MonoBehaviour
             Debug.LogException(e);
             WrongInformation(e.Message);
         }
+    }
+
+    private void Update()
+    {
+        if(Application.isFocused)
+            Application.targetFrameRate = 60;
+        else
+            Application.targetFrameRate = 5;
     }
 
     public string GetLocalIPv4()

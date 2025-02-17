@@ -13,8 +13,14 @@ public class ItemDescription : MonoBehaviour
     public GameObject linkButton;
     string link;
 
+    public float positionLerp;
+    public float flatSpeed;
+
+    public GameObject visual;
 
     public static ItemDescription instance;
+
+    private bool on;
 
     private void Start()
     {
@@ -36,20 +42,27 @@ public class ItemDescription : MonoBehaviour
 
     void Update()
     {
-        if(Item.lastPickedUp != null)
+        if(Item.lastHoverOver != null && on)
         {
-            var trans = Item.lastPickedUp.visual.transform;
-            var size = (RectTransform)Item.lastPickedUp.transform;
-            transform.position = trans.position + new Vector3(0, vertOffset + 
-                rect.sizeDelta.y/2f + followRotation.sizeDelta.y + size.sizeDelta.y/2f);
+            visual.SetActive(true);
+            var trans = Item.lastHoverOver.visual.transform;
+            var size = (RectTransform)Item.lastHoverOver.transform;
+
+            var targetPos = trans.position + new Vector3(0, vertOffset +
+                rect.sizeDelta.y / 2f + followRotation.sizeDelta.y + size.sizeDelta.y / 2f);
+
+            float distance = Vector2.Distance(transform.position, targetPos) * positionLerp;
+            transform.position = Vector3.MoveTowards(transform.position, targetPos, (distance + flatSpeed) * Time.deltaTime);
+            
             transform.rotation = trans.rotation;
             followRotation.rotation = trans.rotation;
         }
-        else gameObject.SetActive(false);
+        else visual.SetActive(false);
     }
 
     public void Switch()
     {
-        gameObject.SetActive(!gameObject.activeInHierarchy);
+        on = !on;
+        Item.lastHoverOver = null;
     }
 }

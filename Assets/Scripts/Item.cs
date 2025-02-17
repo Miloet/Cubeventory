@@ -45,6 +45,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
 
     public static HashSet<Item> allInventoryItems = new HashSet<Item>();
     public static Item lastPickedUp;
+    public static Item lastHoverOver;
     public static Vector2 itemOffset;
 
     private void Start()
@@ -261,7 +262,6 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         itemOffset = (Vector2)transform.position - eventData.position;
 
         visual.transform.SetAsLastSibling();
-        ItemDescription.instance.OnItemChange(lastPickedUp);
         inventoryPosition = new Vector2Int(-1, -1);
         PlaceServerRPC(false);
         UpdateColorServerRPC(false);
@@ -412,6 +412,8 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
 
     public void OnPointerEnter(PointerEventData pointerEventData)
     {
+        lastHoverOver = this;
+        ItemDescription.instance.OnItemChange(lastHoverOver);
         if (CanFuckWith())
         {
             if (!isDragging) animator.SetBool("Hover", true);

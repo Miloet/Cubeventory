@@ -50,7 +50,8 @@ public class MouseBehaviour : NetworkBehaviour
             SendNameServerRPC(playerName);
             //playerColor = new Color(Random.Range(0f,1f), Random.Range(0f, 1f), Random.Range(0f, 1f),1);
         }
-        
+        else
+            RequestNameServerRPC();
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -64,7 +65,6 @@ public class MouseBehaviour : NetworkBehaviour
         this.name.text = name;
     }
 
-
     [ServerRpc(RequireOwnership = false)]
     public void RequestInventoryServerRPC(ulong uID)
     {
@@ -77,6 +77,18 @@ public class MouseBehaviour : NetworkBehaviour
 
         CreateInventory(uID);
     }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestNameServerRPC()
+    {
+        RequestNameClientRPC();
+    }
+    [ClientRpc(RequireOwnership = false)]
+    public void RequestNameClientRPC()
+    {
+        if (IsOwner) SendNameServerRPC(playerName);
+    }
+
 
     public void CreateInventory(ulong uID)
     {
@@ -92,6 +104,11 @@ public class MouseBehaviour : NetworkBehaviour
         if (!IsOwner) return;
 
         if(Application.isFocused)
-            transform.position = Input.mousePosition;
+        {
+            var normalized = new Vector3(Input.mousePosition.x / Screen.width, Input.mousePosition.y / Screen.height);
+            var position = new Vector3(normalized.x * 1920f, normalized.y * 1080f);
+            transform.position = position;
+        }
+            
     }
 }
