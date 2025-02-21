@@ -153,6 +153,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     public async void UpdateItem()
     {
         nameText.text = name;
+        nameText.color = new Color(1f - color.r, 1f - color.g, 1f - color.b);
         float totalCells = weight.Length;// * weight.GetLength(1);
 
         if(gridObj.childCount < totalCells)

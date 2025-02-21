@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using SFB;
 using TMPro;
 using Unity.Netcode;
+using Unity.VisualScripting;
 
 
 public class InventorySaveSystem : MonoBehaviour
@@ -184,13 +185,14 @@ public struct ItemData
     }
     public async Awaitable SetItemData(Item item, Inventory inv, ulong owner)
     {
-        SetItemData(item);
+        SetItemData(item, inv == null ? false : true);
         await Awaitable.NextFrameAsync();
-        item.SetPositionInInventory(inventoryPosition, inv);
+        if(inv != null) item.SetPositionInInventory(inventoryPosition, inv);
+        else 
         item.RequestOwnershipChangeServerRPC(owner, item.transform.position);
     }
-    public void SetItemData(Item item)
+    public void SetItemData(Item item, bool isInInventory)
     {
-        item.SendItemServerRPC(name, description, link, weight, (uint)weightSize.x, (uint)weightSize.y, color, true);
+        item.SendItemServerRPC(name, description, link, weight, (uint)weightSize.x, (uint)weightSize.y, color, isInInventory);
     }
 }
