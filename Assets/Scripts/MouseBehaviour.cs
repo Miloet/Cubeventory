@@ -6,6 +6,7 @@ public class MouseBehaviour : NetworkBehaviour
 {
 
     public static MouseBehaviour instance;
+    public static Camera cam;
 
     public string playerName;
     public ulong PlayerID;
@@ -17,6 +18,7 @@ public class MouseBehaviour : NetworkBehaviour
 
     private void Start()
     {
+        cam = Camera.main;
         canvas = GameObject.Find("Canvas").GetComponent<Canvas>();
         if (IsServer)
         {
@@ -105,10 +107,29 @@ public class MouseBehaviour : NetworkBehaviour
 
         if(Application.isFocused)
         {
-            var normalized = new Vector3(Input.mousePosition.x / Screen.width, Input.mousePosition.y / Screen.height);
-            var position = new Vector3(normalized.x * 1920f, normalized.y * 1080f);
-            transform.position = position;
+            Vector3 pos = cam.ScreenToWorldPoint(Input.mousePosition);
+            pos.z = -1;
+            transform.position = pos;
         }
-            
+    }
+
+    public static Vector3 NormalizeMousePosition()
+    {
+        var normalized = new Vector3(Input.mousePosition.x / Screen.width, Input.mousePosition.y / Screen.height);
+        var position = new Vector3(normalized.x * 1920f, normalized.y * 1080f);
+
+        return position;
+    }
+    public static Vector3 NormalizeMousePosition(Vector2 pos)
+    {
+        var normalized = new Vector3(pos.x / Screen.width, pos.y / Screen.height);
+        var position = new Vector3(normalized.x * 1920f, normalized.y * 1080f);
+
+        return position;
+    }
+
+    public static Vector2 Mouse01()
+    {
+        return new Vector2(Input.mousePosition.x / Screen.width, Input.mousePosition.y / Screen.height);
     }
 }

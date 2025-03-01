@@ -260,7 +260,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         NetworkObject.TrySetParent(MouseBehaviour.instance.canvas.transform, true);
         isDragging = true;
         lastPickedUp = this;
-        itemOffset = (Vector2)transform.position - eventData.position;
+        itemOffset = (Vector2)transform.position - (Vector2)MouseBehaviour.cam.ScreenToWorldPoint(Input.mousePosition);
 
         visual.transform.SetAsLastSibling();
         inventoryPosition = new Vector2Int(-1, -1);
@@ -271,7 +271,7 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     {
         if (!CanFuckWith()) return;
 
-        position = eventData.position + itemOffset;
+        position = (Vector2)MouseBehaviour.cam.ScreenToWorldPoint(Input.mousePosition) + itemOffset;
     }
     public void OnEndDrag(PointerEventData eventData)
     {
