@@ -72,10 +72,10 @@ RectTransform:
   - {fileID: 6341671592465973278}
   m_Father: {fileID: 5113155325732789206}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -645, y: -357.2}
-  m_SizeDelta: {x: 570, y: 230}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 620, y: 467.5}
+  m_SizeDelta: {x: -1260, y: -945}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6349712620826251689
 CanvasRenderer:
@@ -856,7 +856,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_TargetDisplay: 0
 --- !u!114 &3161610789673144130
 MonoBehaviour:
@@ -910,8 +910,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3108566525
-  InScenePlacedSourceGlobalObjectIdHash: 0
+  GlobalObjectIdHash: 2079273336
+  InScenePlacedSourceGlobalObjectIdHash: 2079273336
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
@@ -939,6 +939,12 @@ MonoBehaviour:
   chatWindow: {fileID: 467487758965105924}
   messagePrefab: {fileID: 5907830029892388460, guid: 7dc09151f51adf749a72b3069f8b6dfe, type: 3}
   chatInput: {fileID: 7221234926448683365}
+  scrollRect: {fileID: 0}
+  isInMain: 0
+  chatbox: {fileID: 0}
+  leftCollapseButton: {fileID: 0}
+  rightCollapseButton: {fileID: 0}
+  expandButton: {fileID: 0}
 --- !u!1 &2779576602658081550
 GameObject:
   m_ObjectHideFlags: 0
@@ -1266,7 +1272,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0.00020087474}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &6231550844227529011

@@ -2,6 +2,9 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Linq;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 public class ItemSpawner : MonoBehaviour
 {
@@ -10,6 +13,8 @@ public class ItemSpawner : MonoBehaviour
     public TMP_InputField descriptionField;
     public TMP_InputField linkField;
     public FlexibleColorPicker colorPicker;
+
+    public TMP_Dropdown inventorySelectorForDelete;
 
     private Toggle[,] toggles;
     private const int maxItemSize = 6;
@@ -23,6 +28,35 @@ public class ItemSpawner : MonoBehaviour
             formatted[i / maxItemSize, i % maxItemSize] = all[i];
         }
         toggles = formatted;
+        _ = AddEventListener();
+    }
+
+    async Awaitable AddEventListener()
+    {
+        await Awaitable.WaitForSecondsAsync(1);
+        MouseBehaviour.instance.pickedUpItemEvent.AddListener(UpdateInputFieldsToMatchItem);
+    }
+
+    private void Update()
+    {
+
+
+        //Rotate
+        if (Input.GetButtonDown("RotateRight"))
+            RotateItem(true);
+        if (Input.GetButtonDown("RotateLeft"))
+            RotateItem(false);
+
+        if (MouseBehaviour.instance.IsHost)
+        {
+            //Delete
+            if (Input.GetButton("Control") && Input.GetButtonDown("Delete"))
+                DeleteItem();
+
+            //Duplicate
+            if (Input.GetButton("Control") && Input.GetButtonDown("Duplicate"))
+                DuplicateItem();
+        }
     }
 
     public void SpawnItem()
@@ -106,6 +140,33 @@ public class ItemSpawner : MonoBehaviour
         foreach(Item i in allItems)
         {
             DeleteItem(i);
+        }
+    }
+
+    public void DeleteInventory()
+    {
+        int playerIndex = inventorySelectorForDelete.value;
+        List<Item> itemInInventory = new List<Item>();
+
+
+        if (playerIndex != 0)
+        {
+            Inventory inv = Inventory.inventories.ToArray()[playerIndex - 1];
+            foreach (Item item in Item.allInventoryItems)
+            {
+                if (item.RectOverlap(inv.rectTransform)) itemInInventory.Add(item);
+            }
+        }
+        else
+        {
+            Item[] allItems = FindObjectsByType<Item>(FindObjectsSortMode.None);
+
+            itemInInventory = allItems.Except(Item.allInventoryItems).ToList();
+        }
+
+        foreach (Item item in itemInInventory)
+        {
+            DeleteItem(item);
         }
     }
 
@@ -270,4 +331,12 @@ public class ItemSpawner : MonoBehaviour
     }
 
 
+
+    public void UpdateInputFieldsToMatchItem(Item item)
+    {
+        nameField.text = item.name;
+        descriptionField.text = item.description;
+        colorPicker.color = item.color;
+        linkField.text = item.link;
+    }
 }

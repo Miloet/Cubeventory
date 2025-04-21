@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
 using System;
+using SFB;
 public class Background : MonoBehaviour
 {
     private Material mat;
@@ -20,7 +21,6 @@ public class Background : MonoBehaviour
         mat = GetComponent<Image>().material;
         Load();
         Set();
-
         if (primaryColorPicker != null)
         {
             primaryColorPicker.color = color1;
@@ -48,25 +48,38 @@ public class Background : MonoBehaviour
         Save();
     }
 
-
     public void Load()
     {
         if (sprite == null)
         {
             string documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            string path = "Cubeventory";
+            string folder = "Cubeventory";
             string file = "Background.png";
-            string fullPath = Path.Combine(documents, path, file);
-            if (File.Exists(fullPath))
-            {
-                var fileData = File.ReadAllBytes(fullPath);
-                var texture = new Texture2D(1920, 1080);
-                texture.LoadImage(fileData);
-
-                sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
-            }
-            else sprite = null;
+            string fullPath = Path.Combine(documents, folder, file);
+            Load(fullPath);
         }
+    }
+
+    public void SelectLoad()
+    {
+        string documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        string folder = "Cubeventory";
+
+        string[] fullPath = StandaloneFileBrowser.OpenFilePanel("Select Image", Path.Combine(documents, folder), new ExtensionFilter[] { new ExtensionFilter("ImageFiles", "png", "jpg") }, false);
+        Load(fullPath[0]);
+    }
+
+    public void Load(string path)
+    {
+        if (File.Exists(path))
+        {
+            var fileData = File.ReadAllBytes(path);
+            var texture = new Texture2D(1920, 1080);
+            texture.LoadImage(fileData);
+
+            sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
+        }
+        else sprite = null;
 
         color1 =
             new Color(
@@ -82,6 +95,7 @@ public class Background : MonoBehaviour
                 );
 
         lerp = PlayerPrefs.GetFloat("Lerp", 0.35f);
+        Set();
     }
 
     public void Save()

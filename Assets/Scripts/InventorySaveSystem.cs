@@ -6,8 +6,6 @@ using System.IO;
 using System.Collections.Generic;
 using SFB;
 using TMPro;
-using Unity.Netcode;
-using Unity.VisualScripting;
 
 
 public class InventorySaveSystem : MonoBehaviour
@@ -32,20 +30,16 @@ public class InventorySaveSystem : MonoBehaviour
     public void UpdatePlayerNames()
     {
         playerDropdown.ClearOptions();
-        playerDropdown.AddOptions(CreateOptions(MyNetwork.allPlayerNames.ToArray()));
+
+        List<TMP_Dropdown.OptionData> data = new();
+        foreach (Inventory i in Inventory.inventories)
+        {
+            data.Add(new TMP_Dropdown.OptionData(i.owner));
+        }
+        playerDropdown.AddOptions(data);
+
         fullPath = Path.Combine(documentsFolder, rootFolderName);
     }
-
-    private List<TMP_Dropdown.OptionData> CreateOptions(string[] array)
-    {
-        List<TMP_Dropdown.OptionData> option = new List<TMP_Dropdown.OptionData>();
-        for (int i = 0; i < array.Length; i++)
-        {
-            option.Add(new TMP_Dropdown.OptionData($"{array[i]}"));
-        }
-        return option;
-    }
-
     
     public void SaveInventory()
     {
@@ -55,7 +49,6 @@ public class InventorySaveSystem : MonoBehaviour
         ulong playerID = inv.GetOwner();
 
         List<Item> itemInInventory = new List<Item>();
-
         foreach (Item item in Item.allInventoryItems)
         {
             if(item.RectOverlap(inv.rectTransform)) itemInInventory.Add(item);
@@ -78,8 +71,17 @@ public class InventorySaveSystem : MonoBehaviour
             Directory.CreateDirectory(fullPath);
         }
 
-        var path = StandaloneFileBrowser.SaveFilePanel("Save Inventory", fullPath, "inv", "cubeventory");
+        string path;
+        try
+        {
+            path = StandaloneFileBrowser.SaveFilePanel("Save Inventory", fullPath, "inv", "cubeventory");
+        }
+        catch
+        {
+            ChatSystem.SystemSendMessage("<color=red>you fucko-! YOU DIDNT SAVE THE FILE!!!! >:[");
 
+            return;
+        }
         if (path == null)
         {
             ChatSystem.SystemSendMessage("<color=red>you fucko-! YOU DIDNT SAVE THE FILE!!!! >:[");
@@ -87,7 +89,7 @@ public class InventorySaveSystem : MonoBehaviour
             return;
         }
 
-        string contents = JsonUtility.ToJson(invData);
+        string contents = JsonUtility.ToJson(invData, true);
 
         File.WriteAllText(path, contents);
     }
@@ -103,11 +105,20 @@ public class InventorySaveSystem : MonoBehaviour
             Directory.CreateDirectory(fullPath);
         }
 
-        var path = StandaloneFileBrowser.OpenFilePanel("Load Inventory", fullPath, "cubeventory", false);
-
-        if(path == null)
+        string[] path;
+        try
         {
-            ChatSystem.SystemSendMessage("<color=red>you fucko-! YOU DIDNT SELECT A FILE!!!! >:[");
+            path = StandaloneFileBrowser.OpenFilePanel("Load Inventory", fullPath, "cubeventory", false);
+        }
+        catch
+        {
+            ChatSystem.SystemSendMessage("<color=red>you fucko-! YOU DIDNT SAVE THE FILE!!!! >:[");
+
+            return;
+        }
+        if (path == null)
+        {
+            ChatSystem.SystemSendMessage("<color=red>you fucko-! YOU DIDNT SAVE THE FILE!!!! >:[");
 
             return;
         }
@@ -188,7 +199,7 @@ public struct ItemData
         SetItemData(item, inv == null ? false : true);
         await Awaitable.NextFrameAsync();
         if(inv != null) item.SetPositionInInventory(inventoryPosition, inv);
-        else 
+
         item.RequestOwnershipChangeServerRPC(owner, item.transform.position);
     }
     public void SetItemData(Item item, bool isInInventory)

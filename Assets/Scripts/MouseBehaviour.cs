@@ -1,7 +1,8 @@
 using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.UI;
-
+using UnityEngine.EventSystems;
+using UnityEngine.Events;
 public class MouseBehaviour : NetworkBehaviour
 {
 
@@ -16,6 +17,7 @@ public class MouseBehaviour : NetworkBehaviour
     public Color playerColor;
     public new TMPro.TextMeshProUGUI name;
 
+    public UnityEvent<Item> pickedUpItemEvent = new UnityEvent<Item>();
     private void Start()
     {
         cam = Camera.main;
@@ -131,5 +133,11 @@ public class MouseBehaviour : NetworkBehaviour
     public static Vector2 Mouse01()
     {
         return new Vector2(Input.mousePosition.x / Screen.width, Input.mousePosition.y / Screen.height);
+    }
+
+
+    public static bool isWriting()
+    {
+        return EventSystem.current.currentSelectedGameObject != null;
     }
 }

@@ -20,6 +20,7 @@ using Unity.Networking.Transport.Relay;
 using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 using Unity.Services.Core;
+using TMPro.EditorUtilities;
 
 public class MyNetwork : MonoBehaviour
 {
@@ -56,6 +57,13 @@ public class MyNetwork : MonoBehaviour
         if (doOnce) return;
 
         doOnce = true;
+
+        player_nameInput.text = PlayerPrefs.GetString("Player_Name", "");
+        float r = PlayerPrefs.GetFloat("Player_ColorR", 1f);
+        float g = PlayerPrefs.GetFloat("Player_ColorG", .3f);
+        float b = PlayerPrefs.GetFloat("Player_ColorB", .3f);
+        player_colorInput.color = new Color(r,g,b);
+
 
         try
         {
@@ -164,14 +172,25 @@ public class MyNetwork : MonoBehaviour
 
     #endregion 
 
+    public void SetPrefs()
+    {
+        PlayerPrefs.SetString("Player_Name", player_nameInput.text);
+
+        var col = player_colorInput.color;
+        PlayerPrefs.SetFloat("Player_ColorR", col.r);
+        PlayerPrefs.SetFloat("Player_ColorG", col.g);
+        PlayerPrefs.SetFloat("Player_ColorB", col.b);
+    }
     public async void StartClientButton()
     {
+        SetPrefs();
         playerButton.interactable = false;
         hostButton.interactable = false;
         await StartClient();
     }
     public async void StartHostButton()
     {
+        SetPrefs();
         playerButton.interactable = false;
         hostButton.interactable = false;
         await StartHost();

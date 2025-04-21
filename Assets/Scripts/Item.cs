@@ -260,11 +260,12 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         NetworkObject.TrySetParent(MouseBehaviour.instance.canvas.transform, true);
         isDragging = true;
         lastPickedUp = this;
+        MouseBehaviour.instance.pickedUpItemEvent.Invoke(lastPickedUp);
         itemOffset = (Vector2)transform.position - (Vector2)MouseBehaviour.cam.ScreenToWorldPoint(Input.mousePosition);
 
         visual.transform.SetAsLastSibling();
         inventoryPosition = new Vector2Int(-1, -1);
-        PlaceServerRPC(false);
+        PlaceServerRPC(false, inventoryPosition);
         UpdateColorServerRPC(false);
     }
     public void OnDrag(PointerEventData eventData)
@@ -304,7 +305,9 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
             #endregion
 
             CheckForOverlap();
-            PlaceServerRPC(true);
+            PlaceServerRPC(true, inventoryPosition);
+
+            NetworkObject.TrySetParent(inventory, true);
 
             if (ownerId != OwnerClientId)
             {
@@ -396,14 +399,16 @@ public class Item : NetworkBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
         transform.position = position;
     }
     [ServerRpc(RequireOwnership = false)]
-    public void PlaceServerRPC(bool inInventory)
+    public void PlaceServerRPC(bool inInventory, Vector2Int position)
     {
-        PlaceClientRPC(inInventory);
+        PlaceClientRPC(inInventory, position);
     }
     [ClientRpc]
-    public void PlaceClientRPC(bool inInventory)
+    public void PlaceClientRPC(bool inInventory, Vector2Int position)
     {
-        if(inInventory) allInventoryItems.Add(this);
+        inventoryPosition = position;
+
+        if (inInventory) allInventoryItems.Add(this);
         else allInventoryItems.Remove(this);
     }
 
