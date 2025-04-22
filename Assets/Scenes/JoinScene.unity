@@ -1675,7 +1675,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3105130663104381161, guid: 7dc09151f51adf749a72b3069f8b6dfe, type: 3}
       propertyPath: m_text
-      value: "Controlls: \n\\t<i>Hold right click ----------------------------------------------------------\n\\tHold
+      value: "Controls: \n\\t<i>Hold right click ----------------------------------------------------------\n\\tHold
         right click + Scroll wheel ------------------------------------\n\\tCTRL
         + C or D ------------------------------------------\n\\tA or <- / D or -> 
         --------------------------\n\\tCTRL + Delete or X ----------------------------------------\n"
@@ -3530,7 +3530,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -88.9, y: 65.5}
+  m_AnchoredPosition: {x: -88.8999, y: 65.5}
   m_SizeDelta: {x: 159, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &816498684

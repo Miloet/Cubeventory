@@ -8,6 +8,17 @@ public class ColorSelectButton : MonoBehaviour
     public int index;
     private void OnValidate()
     {
+        SetButton();
+    }
+
+
+    private void Start()
+    {
+        SetButton();
+    }
+
+    private void SetButton()
+    {
         var button = GetComponent<Button>();
 
         button.onClick.RemoveAllListeners();

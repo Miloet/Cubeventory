@@ -8,6 +8,9 @@ public class DrawingMenu : MonoBehaviour
     RectTransform parent;
     RectTransform trans;
     public GameObject expandButton;
+    public Animator fullscreenButton;
+    public RuntimeAnimatorController fullscreenController;
+    public RuntimeAnimatorController smallscreenController;
 
     private Vector2 closedPosition;
     private Vector2 openPosition;
@@ -65,6 +68,8 @@ public class DrawingMenu : MonoBehaviour
     public void SetFullscreen(bool fullscreen)
     {
         isFullscreen = fullscreen;
+
+        fullscreenButton.runtimeAnimatorController = !isFullscreen ? fullscreenController : smallscreenController;
         if (isFullscreen)
         {
             isOpen = true;

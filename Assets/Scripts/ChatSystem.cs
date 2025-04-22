@@ -27,6 +27,7 @@ public class ChatSystem : NetworkBehaviour
     public GameObject rightCollapseButton;
 
     public GameObject expandButton;
+    public RectTransform layoutGroup;
 
     private Vector2 closedPosition;
     private Vector2 openPosition;
@@ -47,8 +48,8 @@ public class ChatSystem : NetworkBehaviour
 
         if(isInMain)
         {
-            openPosition =  new Vector2(chatLeft ? -800 : 800, 200);
-            closedPosition =new Vector2(chatLeft ? -1130 : 1130, 200);
+            openPosition =  new Vector2(chatLeft ? -780 : 800, 200);
+            closedPosition =new Vector2(chatLeft ? -1110 : 1130, 200);
 
             rightCollapseButton.SetActive(chatLeft);
             leftCollapseButton.SetActive(!chatLeft);
@@ -235,7 +236,11 @@ public class ChatSystem : NetworkBehaviour
     public async Awaitable ScrollToBottom()
     {
         await Awaitable.EndOfFrameAsync();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(layoutGroup);
+
+
         scrollRect.normalizedPosition = new Vector2(0, 0);
+
     }
 
     public void SetIsLeft(bool left)

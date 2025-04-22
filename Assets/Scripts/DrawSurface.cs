@@ -5,15 +5,19 @@ using UnityEngine.UI;
 using SFB;
 using System.IO;
 using UnityEngine.Rendering;
+using UnityEngine.Events;
+using System;
 
 public class DrawSurface : MonoBehaviour
 {
     private ToolSize tool;
     private int color = 2;
     public Color[] colors;
+    public static Color[] staticColors;
     const int textureSize = 64; 
 
     public DrawingMenu menu;
+    public Toggle whiteOverrideToggle;
     private Texture2D drawingTexture;
     public List<Texture2D> oldTexture = new List<Texture2D>(8);
 
@@ -21,6 +25,8 @@ public class DrawSurface : MonoBehaviour
     Image image;
     Camera cam;
     Vector2Int lastPos = Vector2Int.one * -1;
+
+    [NonSerialized] public UnityEvent<Color> updateColor = new();
 
     enum ToolSize
     {
@@ -31,11 +37,14 @@ public class DrawSurface : MonoBehaviour
 
     void Start()
     {
-        ClearCanvas();
         trans = GetComponent<RectTransform>();
+        staticColors = colors;
         image = GetComponent<Image>();
         cam = Camera.main;
+        ClearCanvas();
     }
+
+    bool boarderDelay;
 
     private void Update()
     {
@@ -49,12 +58,14 @@ public class DrawSurface : MonoBehaviour
             UpdateTexture(drawingTexture);
         }
 
-
-        if (!IsWithinBoarder())
+        bool within = !IsWithinBoarder();
+        if(!within) boarderDelay = false;
+        if (boarderDelay)
         {
             lastPos = Vector2Int.one * -1;
             return;
         }
+        boarderDelay = within;
 
         if (Input.GetButtonDown("Click"))
         {
@@ -75,6 +86,7 @@ public class DrawSurface : MonoBehaviour
     public void SelectColor(int index)
     {
         color = index;
+        updateColor.Invoke(colors[color]);
     }
     public void SelectTool(int index)
     {
@@ -83,6 +95,7 @@ public class DrawSurface : MonoBehaviour
     public void ClearCanvas()
     {
         drawingTexture = GetTexture();
+        UpdateTexture(drawingTexture);
     }
     public static Texture2D GetTexture()
     {
@@ -93,7 +106,7 @@ public class DrawSurface : MonoBehaviour
         {
             for (int x = 0; x < textureSize; x++)
             {
-                tex.SetPixel(x, y, Color.white);
+                tex.SetPixel(x, y, staticColors[0]);
             }
         }
 
@@ -118,9 +131,10 @@ public class DrawSurface : MonoBehaviour
 
     Vector2Int GetPositionOnTexture()
     {
+        //Vector2 mouse = menu.isFullscreen ? Input.mousePosition : cam.ScreenToWorldPoint(Input.mousePosition);
         Vector2 mouse = cam.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 adjusted = Remap(mouse, (Vector2)trans.position - (trans.sizeDelta/2f * trans.lossyScale), trans.sizeDelta.x * trans.lossyScale.x);
-
+        Vector2 position = menu.isFullscreen ? trans.position : cam.ScreenToWorldPoint(trans.position);
+        Vector2 adjusted = Remap(mouse, position - (trans.sizeDelta/2f * trans.lossyScale), trans.sizeDelta.x * trans.lossyScale.x);
         Vector2Int round = new Vector2Int((int)adjusted.x, (int)adjusted.y);
 
         return round;
@@ -147,13 +161,13 @@ public class DrawSurface : MonoBehaviour
 
             foreach(Vector2Int p in pixels)
             {
-                drawingTexture.SetPixel(p.x, p.y, colors[color]);
+                SetPixel(p.x, p.y, colors[color]);
             }
 
         }
         foreach (Vector2Int p in GetSize(point))
         {
-            drawingTexture.SetPixel(p.x, p.y, colors[color]);
+            SetPixel(p.x, p.y, colors[color]);
         }
         UpdateTexture(drawingTexture);
     }
@@ -162,6 +176,17 @@ public class DrawSurface : MonoBehaviour
     {
         tex.Apply(false);
         image.sprite = ConvertToSprite(tex);
+    }
+
+
+    void SetPixel(int x, int y, Color c)
+    {
+        if(whiteOverrideToggle.isOn)
+        {
+            if (drawingTexture.GetPixel(x,y) != colors[0])
+                return;
+        }
+        drawingTexture.SetPixel(x, y, colors[color]);
     }
     #endregion
 
@@ -241,8 +266,6 @@ public class DrawSurface : MonoBehaviour
 
     public static Vector2 Remap(Vector2 mouse, Vector2 bottemLeft, float canvasWidth)
     {
-        Vector2 from = new Vector2(0,0);
-
         return (mouse - bottemLeft) / (canvasWidth / textureSize);
     }
     public static Sprite ConvertToSprite(Texture2D texture)
@@ -254,9 +277,11 @@ public class DrawSurface : MonoBehaviour
         var rect = trans.rect;
         rect.width *= trans.lossyScale.x;
         rect.height *= trans.lossyScale.x;
-        rect.position = (Vector2)trans.position - new Vector2(rect.width, rect.height)/2f;
-        
-        return rect.Contains(cam.ScreenToWorldPoint(Input.mousePosition));
+        Vector2 position = menu.isFullscreen ? trans.position : cam.ScreenToWorldPoint(trans.position);
+        rect.position = position - new Vector2(rect.width, rect.height)/2f;
+
+        Vector2 mouse = cam.ScreenToWorldPoint(Input.mousePosition);
+        return rect.Contains(mouse);
     }
 
 
