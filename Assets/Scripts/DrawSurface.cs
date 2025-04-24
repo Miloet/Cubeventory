@@ -34,7 +34,9 @@ public class DrawSurface : MonoBehaviour
         Medium = 1,
         Large = 2,
     }
-
+    [NonSerialized] public int dither = -1;
+    public float[] ditherValues = {2, 4, 6, 8, 12};
+    public Texture2D ditherTexture;
     void Start()
     {
         trans = GetComponent<RectTransform>();
@@ -133,7 +135,7 @@ public class DrawSurface : MonoBehaviour
     {
         //Vector2 mouse = menu.isFullscreen ? Input.mousePosition : cam.ScreenToWorldPoint(Input.mousePosition);
         Vector2 mouse = cam.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 position = menu.isFullscreen ? trans.position : cam.ScreenToWorldPoint(trans.position);
+        Vector2 position = trans.position;
         Vector2 adjusted = Remap(mouse, position - (trans.sizeDelta/2f * trans.lossyScale), trans.sizeDelta.x * trans.lossyScale.x);
         Vector2Int round = new Vector2Int((int)adjusted.x, (int)adjusted.y);
 
@@ -186,6 +188,13 @@ public class DrawSurface : MonoBehaviour
             if (drawingTexture.GetPixel(x,y) != colors[0])
                 return;
         }
+        if(dither != -1)
+        {
+            bool isAligned = ditherTexture.GetPixel(x, y).r <= ditherValues[dither];
+            if (!isAligned)
+                return;
+        }
+
         drawingTexture.SetPixel(x, y, colors[color]);
     }
     #endregion
@@ -277,7 +286,7 @@ public class DrawSurface : MonoBehaviour
         var rect = trans.rect;
         rect.width *= trans.lossyScale.x;
         rect.height *= trans.lossyScale.x;
-        Vector2 position = menu.isFullscreen ? trans.position : cam.ScreenToWorldPoint(trans.position);
+        Vector2 position = trans.position;
         rect.position = position - new Vector2(rect.width, rect.height)/2f;
 
         Vector2 mouse = cam.ScreenToWorldPoint(Input.mousePosition);

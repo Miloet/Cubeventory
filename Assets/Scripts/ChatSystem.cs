@@ -28,6 +28,7 @@ public class ChatSystem : NetworkBehaviour
 
     public GameObject expandButton;
     public RectTransform layoutGroup;
+    public DrawingMenu drawMenu;
 
     private Vector2 closedPosition;
     private Vector2 openPosition;
@@ -35,6 +36,10 @@ public class ChatSystem : NetworkBehaviour
     private bool isOpen = false;
     private bool isExpanded = false;
     float height = 150;
+    public float diff = 540;
+    public float verticalOffset = 200;
+    Transform cam;
+
 
     void Start()
     {
@@ -48,8 +53,7 @@ public class ChatSystem : NetworkBehaviour
 
         if(isInMain)
         {
-            openPosition =  new Vector2(chatLeft ? -780 : 800, 200);
-            closedPosition =new Vector2(chatLeft ? -1110 : 1130, 200);
+            cam = Camera.main.transform;
 
             rightCollapseButton.SetActive(chatLeft);
             leftCollapseButton.SetActive(!chatLeft);
@@ -61,6 +65,10 @@ public class ChatSystem : NetworkBehaviour
     {
         if (!isInMain)
             return;
+
+        float vertTarget = drawMenu.isFullscreen ? 0 : cam.transform.position.y - diff;
+        openPosition =      new Vector2(chatLeft ? -780 : 800, vertTarget + verticalOffset);
+        closedPosition =    new Vector2(chatLeft ? -1110 : 1130, vertTarget + verticalOffset);
 
         if (!Input.GetButton("Control") && Input.GetButtonDown("Enter"))
         {

@@ -20,8 +20,8 @@ public class DrawingMenu : MonoBehaviour
     public Canvas canvas;
     private void Start()
     {
-        openPosition =      new Vector2(0, 5);
-        closedPosition =    new Vector2(0, 320);
+        openPosition =      new Vector2(0, 45);
+        closedPosition =    new Vector2(0, 405);
 
         
 
@@ -73,15 +73,15 @@ public class DrawingMenu : MonoBehaviour
         if (isFullscreen)
         {
             isOpen = true;
-            parent.position = new Vector3(1920, 1080) / 2f;
-            parent.localScale = Vector3.one * 3;
-            canvas.renderMode = RenderMode.WorldSpace;
+            parent.anchoredPosition = new Vector3(-800, -125);
+            parent.localScale = Vector3.one * 2.5f;
+            //canvas.renderMode = RenderMode.WorldSpace;
         }
         else
         {
             parent.anchoredPosition = parentOriginalPos;
             parent.localScale = Vector3.one;
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            //canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         }
     }
 }
