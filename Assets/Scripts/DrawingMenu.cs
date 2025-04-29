@@ -21,7 +21,7 @@ public class DrawingMenu : MonoBehaviour
     private void Start()
     {
         openPosition =      new Vector2(0, 45);
-        closedPosition =    new Vector2(0, 405);
+        closedPosition =    new Vector2(0, 370);
 
         
 
